@@ -1,0 +1,15 @@
+# .gitlab/ci/build.yml - build stage: the mod jar.
+# Runs on the default branch only and keeps the jar as a pipeline artifact.
+
+build:jar:
+  stage: build
+  script:
+    - ./gradlew build --no-daemon
+  artifacts:
+    name: "leicraftclient-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - build/libs/*.jar
+    expire_in: 4 weeks
+
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

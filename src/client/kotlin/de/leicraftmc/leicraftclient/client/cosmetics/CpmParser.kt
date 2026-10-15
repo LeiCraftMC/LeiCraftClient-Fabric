@@ -18,12 +18,26 @@ import de.leicraftmc.leicraftclient.client.LeiCraftClient
  * otherwise nested bones (which all carry `"xy"`) would cancel each other out.
  *
  * Parsing is intentionally forgiving: these files are hand-written and a decade
- * old, so a bad node is skipped rather than failing the whole model.
+ * old, so a bad node is skipped rather than failing the whole model. Numbers are
+ * read leniently because OptiFine's own models write some of them as strings
+ * (`"sizeAdd": "0.1"`).
+ *
+ * See https://optifine.readthedocs.io/cem_parts.html for the field reference.
  */
 object CpmParser {
 
     private const val DEFAULT_TEXTURE_WIDTH = 64f
     private const val DEFAULT_TEXTURE_HEIGHT = 32f
+
+    /** Face names, each with the aliases OptiFine accepts for it. */
+    private val FACE_KEYS = listOf(
+        "uvNorth" to "uvFront",
+        "uvSouth" to "uvBack",
+        "uvWest" to "uvLeft",
+        "uvEast" to "uvRight",
+        "uvUp" to "uvUp",
+        "uvDown" to "uvDown",
+    )
 
     fun parse(json: String): CpmModel? {
         val root = try {
@@ -41,14 +55,18 @@ object CpmParser {
         val attachments = models.mapNotNull { element ->
             val obj = element as? JsonObject ?: return@mapNotNull null
             val node = parseNode(obj, texW, texH) ?: return@mapNotNull null
-            CpmAttachment(CpmAttachPoint.of(obj.string("attachTo")), node)
+            CpmModel.Attachment(CpmModel.AttachPoint.of(obj.string("attachTo")), node)
         }
         if (attachments.isEmpty()) return null
 
-        return CpmModel(root.bool("usePlayerTexture", false), attachments)
+        return CpmModel(
+            usePlayerTexture = root.bool("usePlayerTexture", false),
+            texturePath = root.string("texture"),
+            attachments = attachments,
+        )
     }
 
-    private fun parseNode(obj: JsonObject, texW: Float, texH: Float): CpmNode? {
+    private fun parseNode(obj: JsonObject, texW: Float, texH: Float): CpmModel.Node? {
         val invert = obj.string("invertAxis").orEmpty().lowercase()
         val sx = if (invert.contains("x")) -1f else 1f
         val sy = if (invert.contains("y")) -1f else 1f
@@ -68,7 +86,7 @@ object CpmParser {
         val scale = parseScale(obj)
         val mirrorTexture = obj.string("mirrorTexture").orEmpty().lowercase()
 
-        val quads = ArrayList<CpmQuad>()
+        val quads = ArrayList<CpmModel.Quad>()
         obj.array("boxes")?.forEach { element ->
             val box = element as? JsonObject ?: return@forEach
             try {
@@ -78,7 +96,18 @@ object CpmParser {
             }
         }
 
-        val children = ArrayList<CpmNode>()
+        if (obj.has("sprites")) {
+            // Sprites extrude a texture region rather than wrapping a box, and no
+            // model served by the backend uses them. Warn instead of guessing at
+            // geometry that would render wrongly.
+            LeiCraftClient.LOGGER.warn("CPM model uses unsupported \"sprites\"; those parts are skipped")
+        }
+
+        val children = ArrayList<CpmModel.Node>()
+        // OptiFine accepts both a single `submodel` and a `submodels` list.
+        (obj.get("submodel") as? JsonObject)?.let { sub ->
+            parseNode(sub, texW, texH)?.let(children::add)
+        }
         obj.array("submodels")?.forEach { element ->
             val sub = element as? JsonObject ?: return@forEach
             parseNode(sub, texW, texH)?.let(children::add)
@@ -86,7 +115,7 @@ object CpmParser {
 
         if (quads.isEmpty() && children.isEmpty()) return null
 
-        return CpmNode(
+        return CpmModel.Node(
             x = (translate?.getOrNull(0) ?: 0f) * sx,
             y = (translate?.getOrNull(1) ?: 0f) * sy,
             z = (translate?.getOrNull(2) ?: 0f) * sz,
@@ -106,11 +135,7 @@ object CpmParser {
         return try {
             if (element.isJsonArray) {
                 val a = obj.floats("scale") ?: return floatArrayOf(1f, 1f, 1f)
-                floatArrayOf(
-                    a.getOrElse(0) { 1f },
-                    a.getOrElse(1) { 1f },
-                    a.getOrElse(2) { 1f },
-                )
+                floatArrayOf(a.getOrElse(0) { 1f }, a.getOrElse(1) { 1f }, a.getOrElse(2) { 1f })
             } else {
                 val s = element.asFloat
                 floatArrayOf(s, s, s)
@@ -130,7 +155,7 @@ object CpmParser {
         sy: Float,
         sz: Float,
         mirrorTexture: String,
-        out: MutableList<CpmQuad>,
+        out: MutableList<CpmModel.Quad>,
     ) {
         val c = box.floats("coordinates") ?: return
         if (c.size < 6) return
@@ -138,31 +163,43 @@ object CpmParser {
         val h = c[4]
         val d = c[5]
 
-        // `sizeAdd` grows the box on every side, like vanilla's CubeDeformation.
-        // The UV rects keep using the *uninflated* size.
-        val grow = box.float("sizeAdd", 0f)
-        val x0 = c[0] - grow
-        val x1 = c[0] + w + grow
-        val y0 = c[1] - grow
-        val y1 = c[1] + h + grow
-        val z0 = c[2] - grow
-        val z1 = c[2] + d + grow
+        // `sizeAdd` grows the box on every side, like vanilla's CubeDeformation;
+        // `sizesAdd` does the same per axis. The UV rects keep using the
+        // *uninflated* size.
+        val perAxis = box.floats("sizesAdd")
+        val uniform = box.float("sizeAdd", 0f)
+        val growX = perAxis?.getOrNull(0) ?: uniform
+        val growY = perAxis?.getOrNull(1) ?: uniform
+        val growZ = perAxis?.getOrNull(2) ?: uniform
 
-        val perFace = box.has("uvNorth")
+        val x0 = c[0] - growX
+        val x1 = c[0] + w + growX
+        val y0 = c[1] - growY
+        val y1 = c[1] + h + growY
+        val z0 = c[2] - growZ
+        val z1 = c[2] + d + growZ
+
+        // UVs are either a single textureOffset or a full set of per-face rects --
+        // never both. Detect on any face key, not just uvNorth, so a model that
+        // starts with uvUp is not silently treated as textureOffset.
+        val perFace = FACE_KEYS.any { (name, alias) -> box.has(name) || box.has(alias) }
         val offset = if (perFace) null else box.floats("textureOffset")
         val u = offset?.getOrNull(0) ?: 0f
         val v = offset?.getOrNull(1) ?: 0f
 
-        fun rect(name: String, fallback: FloatArray): FloatArray =
-            if (perFace) box.floats(name) ?: fallback else fallback
+        fun rect(index: Int, fallback: FloatArray): FloatArray {
+            if (!perFace) return fallback
+            val (name, alias) = FACE_KEYS[index]
+            return box.floats(name) ?: box.floats(alias) ?: fallback
+        }
 
         // Standard Minecraft box unwrap, expressed in CPM face names.
-        val north = rect("uvNorth", floatArrayOf(u + d, v + d, u + d + w, v + d + h))
-        val south = rect("uvSouth", floatArrayOf(u + 2 * d + w, v + d, u + 2 * d + 2 * w, v + d + h))
-        val east = rect("uvEast", floatArrayOf(u, v + d, u + d, v + d + h))
-        val west = rect("uvWest", floatArrayOf(u + w + d, v + d, u + w + 2 * d, v + d + h))
-        val up = rect("uvUp", floatArrayOf(u + d, v, u + d + w, v + d))
-        val down = rect("uvDown", floatArrayOf(u + d + w, v, u + 2 * w + d, v + d))
+        val north = rect(0, floatArrayOf(u + d, v + d, u + d + w, v + d + h))
+        val south = rect(1, floatArrayOf(u + 2 * d + w, v + d, u + 2 * d + 2 * w, v + d + h))
+        val west = rect(2, floatArrayOf(u + w + d, v + d, u + w + 2 * d, v + d + h))
+        val east = rect(3, floatArrayOf(u, v + d, u + d, v + d + h))
+        val up = rect(4, floatArrayOf(u + d, v, u + d + w, v + d))
+        val down = rect(5, floatArrayOf(u + d + w, v, u + 2 * w + d, v + d))
 
         val ctx = FaceContext(texW, texH, sx, sy, sz, mirrorTexture, out)
 
@@ -182,7 +219,7 @@ object CpmParser {
         val sy: Float,
         val sz: Float,
         val mirrorTexture: String,
-        val out: MutableList<CpmQuad>,
+        val out: MutableList<CpmModel.Quad>,
     ) {
         /** True when the mirror flips handedness and the winding must be reversed. */
         val reversed = sx * sy * sz < 0f
@@ -229,7 +266,7 @@ object CpmParser {
                 reverseQuad(uv, 2)
             }
 
-            out.add(CpmQuad(pos, uv, nx * sx, ny * sy, nz * sz))
+            out.add(CpmModel.Quad(pos, uv, nx * sx, ny * sy, nz * sz))
         }
 
         /** Reverses the four vertices of a quad stored as flat [stride]-sized tuples. */

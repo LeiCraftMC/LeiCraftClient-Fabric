@@ -12,17 +12,6 @@ import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 
-/** One cosmetic a player has equipped, as listed by `/users/<name>.cfg`. */
-data class CosmeticEntry(
-    /** Backend-relative path to the CPM model, e.g. `assets/items/creeper/model.cfg`. */
-    val modelPath: String,
-    /** Backend-relative path to the model's texture. */
-    val texturePath: String,
-) {
-    /** Stable id used for caching; derived from the model path. */
-    val id: String get() = modelPath.removeSuffix("/model.cfg").substringAfterLast('/')
-}
-
 /**
  * Talks to the LeiCraft cosmetics backend (`capesapi.leicraftmc.de` by default).
  *
@@ -35,6 +24,14 @@ data class CosmeticEntry(
  * Every call blocks, so callers must stay off the render thread.
  */
 object CapesApi {
+
+    /** One cosmetic a player has equipped, as listed by `/users/<name>.cfg`. */
+    data class CosmeticEntry(
+        /** Backend-relative path to the CPM model, e.g. `assets/items/creeper/model.cfg`. */
+        val modelPath: String,
+        /** Backend-relative path to the model's texture. */
+        val texturePath: String,
+    )
 
     private val PNG_MAGIC = byteArrayOf(
         0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,

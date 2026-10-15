@@ -1,0 +1,35 @@
+# .gitlab/ci/testing.yml - test stage.
+# Minecraft 26.3 requires JDK 25, which fixes the base image.
+
+default:
+  image: eclipse-temurin:25-jdk
+  interruptible: true
+  cache:
+    key:
+      files:
+        - gradle/wrapper/gradle-wrapper.properties
+        - build.gradle.kts
+        - gradle.properties
+    paths:
+      - .gradle/caches/
+      - .gradle/wrapper/
+  before_script:
+    - chmod +x ./gradlew
+
+# Kotlin has no separate typecheck step -- compiling is the typecheck.
+test:compile:
+  stage: test
+  script:
+    - ./gradlew assemble --no-daemon
+
+test:unit:
+  stage: test
+  script:
+    - ./gradlew test --no-daemon
+  artifacts:
+    when: always
+    reports:
+      junit: build/test-results/test/TEST-*.xml
+    paths:
+      - build/reports/tests/test/
+    expire_in: 1 week

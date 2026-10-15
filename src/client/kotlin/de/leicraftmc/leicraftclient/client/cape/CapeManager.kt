@@ -2,6 +2,7 @@ package de.leicraftmc.leicraftclient.client.cape
 
 import de.leicraftmc.leicraftclient.client.LeiCraftClient
 import de.leicraftmc.leicraftclient.client.TextureStore
+import de.leicraftmc.leicraftclient.client.api.BackendGate
 import de.leicraftmc.leicraftclient.client.api.CapesApi
 import de.leicraftmc.leicraftclient.client.config.ClientConfig
 import kotlinx.coroutines.CoroutineName
@@ -10,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import net.minecraft.resources.Identifier
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -53,16 +55,24 @@ object CapeManager {
         players.clear()
     }
 
+    /** Short content hash, used so identical capes share one GPU texture. */
+    private fun digest(png: ByteArray): String =
+        MessageDigest.getInstance("SHA-256").digest(png)
+            .take(8)
+            .joinToString("") { "%02x".format(it) }
+
     private fun refresh(username: String, entry: PlayerCape) {
         if (!entry.refreshing.compareAndSet(false, true)) return
 
         scope.launch {
             try {
-                val png = CapesApi.fetchCape(username)
+                val png = BackendGate.withPermit { CapesApi.fetchCape(username) }
                 entry.texture = if (png == null) {
                     null
                 } else {
-                    TextureStore.upload("capes/${username.lowercase()}", png).join()
+                    // Key by content, not by player: a server where everyone wears
+                    // the same cape then uploads one texture instead of one each.
+                    TextureStore.upload("capes/${digest(png)}", png).join()
                 }
             } catch (e: Exception) {
                 LeiCraftClient.LOGGER.warn("Could not load cape for {}", username, e)

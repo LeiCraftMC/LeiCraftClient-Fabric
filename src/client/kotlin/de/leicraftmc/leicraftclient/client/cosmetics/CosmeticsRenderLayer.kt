@@ -54,12 +54,12 @@ class CosmeticsRenderLayer(
 
             for (attachment in cosmetic.model.attachments) {
                 val bone = when (attachment.attachTo) {
-                    CpmAttachPoint.HEAD -> model.head
-                    CpmAttachPoint.BODY -> model.body
-                    CpmAttachPoint.LEFT_ARM -> model.leftArm
-                    CpmAttachPoint.RIGHT_ARM -> model.rightArm
-                    CpmAttachPoint.LEFT_LEG -> model.leftLeg
-                    CpmAttachPoint.RIGHT_LEG -> model.rightLeg
+                    CpmModel.AttachPoint.HEAD -> model.head
+                    CpmModel.AttachPoint.BODY -> model.body
+                    CpmModel.AttachPoint.LEFT_ARM -> model.leftArm
+                    CpmModel.AttachPoint.RIGHT_ARM -> model.rightArm
+                    CpmModel.AttachPoint.LEFT_LEG -> model.leftLeg
+                    CpmModel.AttachPoint.RIGHT_LEG -> model.rightLeg
                 }
                 if (!bone.visible) continue
 
@@ -76,7 +76,7 @@ class CosmeticsRenderLayer(
         collector: SubmitNodeCollector,
         renderType: RenderType,
         lightCoords: Int,
-        node: CpmNode,
+        node: CpmModel.Node,
     ) {
         poseStack.pushPose()
         if (node.hasTransform) {
@@ -105,7 +105,7 @@ class CosmeticsRenderLayer(
         poseStack.popPose()
     }
 
-    private fun emit(pose: PoseStack.Pose, consumer: VertexConsumer, quad: CpmQuad, lightCoords: Int) {
+    private fun emit(pose: PoseStack.Pose, consumer: VertexConsumer, quad: CpmModel.Quad, lightCoords: Int) {
         val pos = quad.pos
         val uv = quad.uv
         for (i in 0 until 4) {

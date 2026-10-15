@@ -1,0 +1,19 @@
+# .gitlab-ci.yml - root include, following the LeiCraftMC style guide (docs/13).
+# This project is Gradle/Kotlin rather than Bun, so the images and cache keys
+# differ from the shared templates; the stage and job layout is the same.
+
+stages:
+  - test
+  - build
+  - release
+
+variables:
+  GIT_DEPTH: "20"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+  # The daemon only costs startup time in a one-shot container.
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+include:
+  - local: ".gitlab/ci/testing.yml"
+  - local: ".gitlab/ci/build.yml"
+  - local: ".gitlab/ci/release.yml"

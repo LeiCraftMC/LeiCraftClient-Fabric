@@ -23,7 +23,7 @@ class CpmParserTest {
     }
 
     /** Every vertex of a node tree, in Minecraft model space. */
-    private fun vertices(node: CpmNode, ox: Float = 0f, oy: Float = 0f, oz: Float = 0f): List<Triple<Float, Float, Float>> {
+    private fun vertices(node: CpmModel.Node, ox: Float = 0f, oy: Float = 0f, oz: Float = 0f): List<Triple<Float, Float, Float>> {
         // Fixtures have no rotation on the nodes being measured, so accumulating
         // translations is enough to place the geometry.
         val x = ox + node.x
@@ -45,7 +45,7 @@ class CpmParserTest {
     fun `christmas hat sits on top of the head`() {
         val model = load("christmas_hat")
         val attachment = model.attachments.single()
-        assertEquals(CpmAttachPoint.HEAD, attachment.attachTo)
+        assertEquals(CpmModel.AttachPoint.HEAD, attachment.attachTo)
 
         // The head bone's pivot is the neck and Y grows downward, so a hat must
         // be entirely above it -- every vertex at a negative Y. The vanilla head
@@ -59,7 +59,7 @@ class CpmParserTest {
     fun `unicorn horn points forward and up`() {
         val model = load("unicorn")
         val attachment = model.attachments.single()
-        assertEquals(CpmAttachPoint.HEAD, attachment.attachTo)
+        assertEquals(CpmModel.AttachPoint.HEAD, attachment.attachTo)
 
         val verts = vertices(attachment.root)
         assertTrue(verts.all { it.second < 0f }, "horn should be above the neck")
@@ -71,7 +71,7 @@ class CpmParserTest {
     fun `wand extends forward from the right hand`() {
         val model = load("arozauber")
         val attachment = model.attachments.single()
-        assertEquals(CpmAttachPoint.RIGHT_ARM, attachment.attachTo)
+        assertEquals(CpmModel.AttachPoint.RIGHT_ARM, attachment.attachTo)
         assertTrue(model.usePlayerTexture, "arozauber is drawn with the player's own skin")
 
         // Raw CPM box is [0.5, -8.5, -14] size [1, 1, 12] with invertAxis "xy",
@@ -120,7 +120,7 @@ class CpmParserTest {
         // space and the badge would sit far below the feet.
         val model = load("clientuse")
         val attachment = model.attachments.single()
-        assertEquals(CpmAttachPoint.BODY, attachment.attachTo)
+        assertEquals(CpmModel.AttachPoint.BODY, attachment.attachTo)
 
         val ys = vertices(attachment.root).map { it.second }
         // The body bone pivots at the neck and the torso spans 0..12, so a badge
@@ -157,9 +157,9 @@ class CpmParserTest {
 
     @Test
     fun `unknown attach points fall back to the body`() {
-        assertEquals(CpmAttachPoint.BODY, CpmAttachPoint.of("somethingElse"))
-        assertEquals(CpmAttachPoint.BODY, CpmAttachPoint.of(null))
-        assertEquals(CpmAttachPoint.RIGHT_ARM, CpmAttachPoint.of("rightArm"))
+        assertEquals(CpmModel.AttachPoint.BODY, CpmModel.AttachPoint.of("somethingElse"))
+        assertEquals(CpmModel.AttachPoint.BODY, CpmModel.AttachPoint.of(null))
+        assertEquals(CpmModel.AttachPoint.RIGHT_ARM, CpmModel.AttachPoint.of("rightArm"))
     }
 
     @Test
@@ -168,4 +168,121 @@ class CpmParserTest {
         assertEquals(null, CpmParser.parse("{}"))
         assertEquals(null, CpmParser.parse("""{"models": []}"""))
     }
+
+    @Test
+    fun `sizesAdd inflates each axis separately`() {
+        val json = box("""{"coordinates": [0, 0, 0, 2, 2, 2], "textureOffset": [0, 0], "sizesAdd": [1, 2, 3]}""")
+        val verts = vertices(assertNotNull(CpmParser.parse(json)).attachments.single().root)
+        // X and Y mirror under "xy"; Z does not. Spans become -1..3, -2..4, -3..5.
+        assertEquals(-3f, verts.minOf { it.first }, 0.001f)
+        assertEquals(1f, verts.maxOf { it.first }, 0.001f)
+        assertEquals(-4f, verts.minOf { it.second }, 0.001f)
+        assertEquals(2f, verts.maxOf { it.second }, 0.001f)
+        assertEquals(-3f, verts.minOf { it.third }, 0.001f)
+        assertEquals(5f, verts.maxOf { it.third }, 0.001f)
+    }
+
+    @Test
+    fun `sizeAdd written as a string is accepted`() {
+        // OptiFine's own hat_jiingy model writes "sizeAdd": "0.1".
+        val json = box("""{"coordinates": [0, 0, 0, 2, 2, 2], "textureOffset": [0, 0], "sizeAdd": "1"}""")
+        val verts = vertices(assertNotNull(CpmParser.parse(json)).attachments.single().root)
+        assertEquals(-1f, verts.minOf { it.third }, 0.001f)
+        assertEquals(3f, verts.maxOf { it.third }, 0.001f)
+    }
+
+    @Test
+    fun `a singular submodel is read like a submodels list`() {
+        val json = """
+            {
+              "type": "PlayerItem", "textureSize": [64, 64],
+              "models": [{
+                "type": "ModelBox", "attachTo": "head", "invertAxis": "xy",
+                "submodel": {
+                  "invertAxis": "xy", "translate": [0, 4, 0],
+                  "boxes": [{"coordinates": [0, 0, 0, 1, 1, 1], "textureOffset": [0, 0]}]
+                }
+              }]
+            }
+        """.trimIndent()
+        val root = assertNotNull(CpmParser.parse(json)).attachments.single().root
+        assertEquals(1, root.children.size)
+        assertEquals(-4f, root.children.single().y, 0.001f)
+    }
+
+    @Test
+    fun `per-face uv aliases are accepted`() {
+        // OptiFine allows Front/Back/Left/Right as aliases for North/South/West/East.
+        val json = box(
+            """{"coordinates": [0, 0, 0, 2, 2, 2],
+                "uvFront": [0, 0, 8, 8], "uvBack": [0, 0, 8, 8],
+                "uvLeft": [0, 0, 8, 8], "uvRight": [0, 0, 8, 8],
+                "uvUp": [0, 0, 8, 8], "uvDown": [0, 0, 8, 8]}""",
+        )
+        val quads = assertNotNull(CpmParser.parse(json)).attachments.single().root.quads
+        assertEquals(6, quads.size)
+        // 8/64 = 0.125 on every corner; proves the aliases were read rather than
+        // the box falling back to a missing textureOffset.
+        assertTrue(quads.all { q -> q.uv.all { it == 0f || it == 0.125f } }, "aliases ignored")
+    }
+
+    @Test
+    fun `a box declaring only uvUp is not treated as textureOffset`() {
+        val json = box("""{"coordinates": [0, 0, 0, 2, 2, 2], "uvUp": [0, 0, 64, 32]}""")
+        val quads = assertNotNull(CpmParser.parse(json)).attachments.single().root.quads
+        val up = quads[4]
+        assertEquals(1f, up.uv.max(), 0.001f, "uvUp should map to the full texture")
+    }
+
+    @Test
+    fun `invertAxis z mirrors only depth`() {
+        // OptiFine's mrcheeze model uses "z" alone, so the generic rule has to
+        // hold rather than just the Blockbench "xy" default.
+        val json = """
+            {
+              "type": "PlayerItem", "textureSize": [64, 64],
+              "models": [{
+                "type": "ModelBox", "attachTo": "body", "invertAxis": "z",
+                "translate": [1, 2, 3],
+                "boxes": [{"coordinates": [0, 0, 4, 1, 1, 1], "textureOffset": [0, 0]}]
+              }]
+            }
+        """.trimIndent()
+        val root = assertNotNull(CpmParser.parse(json)).attachments.single().root
+        assertEquals(1f, root.x, 0.001f)
+        assertEquals(2f, root.y, 0.001f)
+        assertEquals(-3f, root.z, 0.001f)
+
+        val verts = vertices(root)
+        // X and Y keep their signs, Z mirrors: [4,5] -> [-5,-4], then +(-3).
+        assertEquals(1f, verts.minOf { it.first }, 0.001f)
+        assertEquals(2f, verts.maxOf { it.first }, 0.001f)
+        assertEquals(-8f, verts.minOf { it.third }, 0.001f)
+        assertEquals(-7f, verts.maxOf { it.third }, 0.001f)
+    }
+
+    @Test
+    fun `models may declare their own texture`() {
+        val json = """
+            {
+              "type": "PlayerItem", "texture": "assets/items/x/custom.png", "textureSize": [64, 64],
+              "models": [{
+                "type": "ModelBox", "attachTo": "head", "invertAxis": "xy",
+                "boxes": [{"coordinates": [0, 0, 0, 1, 1, 1], "textureOffset": [0, 0]}]
+              }]
+            }
+        """.trimIndent()
+        assertEquals("assets/items/x/custom.png", assertNotNull(CpmParser.parse(json)).texturePath)
+    }
+
+    /** Wraps a single box literal in a minimal head-attached model. */
+    private fun box(boxJson: String): String = """
+        {
+          "type": "PlayerItem", "textureSize": [64, 64],
+          "models": [{
+            "type": "ModelBox", "attachTo": "head", "invertAxis": "xy",
+            "boxes": [$boxJson]
+          }]
+        }
+    """.trimIndent()
 }

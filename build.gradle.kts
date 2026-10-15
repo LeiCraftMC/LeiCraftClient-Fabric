@@ -7,7 +7,10 @@ plugins {
     id("maven-publish")
 }
 
-version = project.property("mod_version") as String
+// Tagged pipelines publish a jar named after the tag; everything else uses the
+// version in gradle.properties.
+version = System.getenv("CI_COMMIT_TAG")?.removePrefix("v")
+    ?: project.property("mod_version") as String
 group = project.property("maven_group") as String
 
 base {
