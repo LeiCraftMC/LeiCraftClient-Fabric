@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "2.4.21"
-    id("fabric-loom") version "1.19-SNAPSHOT"
+    id("net.fabricmc.fabric-loom") version "1.19.1"
     id("maven-publish")
 }
 
@@ -26,6 +26,17 @@ java {
 loom {
     splitEnvironmentSourceSets()
 
+    runs {
+        named("client") {
+            // Cosmetics are looked up by player name, so testing against a real
+            // profile needs the dev client to use that name:
+            //   ./gradlew runClient -PdevUsername=SomeName
+            (project.findProperty("devUsername") as String?)?.let {
+                programArgs("--username", it)
+            }
+        }
+    }
+
     mods {
         register("leicraftclient") {
             sourceSet("main")
@@ -36,6 +47,7 @@ loom {
 
 
 repositories {
+    mavenCentral()
     // Add repositories to retrieve artifacts from in here.
     // You should only use this when depending on other mods because
     // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
@@ -45,12 +57,28 @@ repositories {
 
 dependencies {
     // To change the versions see the gradle.properties file
+    //
+    // Minecraft 26.3 ships unobfuscated, so there is no `mappings` dependency and
+    // nothing needs remapping -- mod dependencies use plain `implementation`.
+    // See https://github.com/FabricMC/fabric-example-mod/tree/26.3
     minecraft("com.mojang:minecraft:${project.property("minecraft_version")}")
-    mappings(loom.officialMojangMappings())
-    modImplementation("net.fabricmc:fabric-loader:${project.property("loader_version")}")
-    modImplementation("net.fabricmc:fabric-language-kotlin:${project.property("kotlin_loader_version")}")
+    implementation("net.fabricmc:fabric-loader:${project.property("loader_version")}")
+    implementation("net.fabricmc:fabric-language-kotlin:${project.property("kotlin_loader_version")}")
 
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
+    implementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
+
+    // The CPM parser is pure logic with no Minecraft types, so it can be unit
+    // tested on a plain JVM. It lives in the client source set, which the test
+    // source set does not see by default.
+    testImplementation(kotlin("test"))
+    testImplementation(sourceSets["client"].output)
+    testImplementation(sourceSets["client"].compileClasspath)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging { events("passed", "failed", "skipped") }
 }
 
 tasks.processResources {
@@ -62,9 +90,9 @@ tasks.processResources {
     filesMatching("fabric.mod.json") {
         expand(
             "version" to project.version,
-            "minecraft_version" to project.property("minecraft_version"),
-            "loader_version" to project.property("loader_version"),
-            "kotlin_loader_version" to project.property("kotlin_loader_version")
+            "minecraft_version" to project.property("minecraft_version")!!,
+            "loader_version" to project.property("loader_version")!!,
+            "kotlin_loader_version" to project.property("kotlin_loader_version")!!
         )
     }
 }
@@ -83,7 +111,7 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 tasks.jar {
-    from("LICENSE") {
+    from("LICENSE.txt") {
         rename { "${it}_${project.base.archivesName.get()}" }
     }
 }

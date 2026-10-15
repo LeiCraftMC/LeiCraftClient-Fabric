@@ -3,11 +3,14 @@
   "id": "leicraftclient",
   "version": "${version}",
   "name": "LeiCraftClient",
-  "description": "",
-  "authors": [],
-  "contact": {},
+  "description": "Custom capes and cosmetics for LeiCraft, served by the LeiCraft cosmetics backend. Reads the same OptiFine-style model and cape formats the previous client used.",
+  "authors": [
+    "LeiCraft"
+  ],
+  "contact": {
+    "homepage": "https://client.leicraftmc.de"
+  },
   "license": "AGPL-3.0",
-  "icon": "assets/leicraftclient/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
