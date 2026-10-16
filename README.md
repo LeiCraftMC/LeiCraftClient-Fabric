@@ -13,6 +13,29 @@ no hosts-file redirect are needed any more — the mod calls the domain directly
   "Custom Player Model" (`model.cfg`) and its texture, and renders them attached
   to the vanilla player bones.
 
+## Requirements
+
+Client-side only — nothing to install on the server. Grab the jar from the
+[releases](https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/releases)
+and drop it in `.minecraft/mods/` together with these:
+
+| Dependency | Version | Notes |
+| --- | --- | --- |
+| Minecraft | `26.3` | exact version; the mod is built against it |
+| Java | 25 | required by Minecraft 26.3 itself |
+| [Fabric Loader](https://fabricmc.net/use/installer/) | `>= 0.20.0` | |
+| [Fabric API](https://modrinth.com/mod/fabric-api) | `0.163.0+26.3` or newer | |
+| [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) | `>= 1.14.2+kotlin.2.4.21` | **easy to miss** — a separate mod, not bundled |
+
+All four are declared in `fabric.mod.json`, so Fabric Loader refuses to start
+and names whatever is missing rather than crashing later. Fabric Language Kotlin
+is the one people forget: it ships the Kotlin runtime plus the coroutines this
+mod uses, and no other mod pulls it in for you.
+
+Everyone who wants to *see* cosmetics needs the mod — each client fetches them
+from the backend itself. Players without it simply see vanilla skins, and your
+own cosmetics still show up for anyone who has it.
+
 ## Design, and why
 
 The guiding constraint was **minimum maintenance per Minecraft update**.
@@ -149,15 +172,27 @@ GitLab CI, following [docs/13](https://git.leicraftmc.de/LeiCraftMC/Style-Guides
 of the style guide — same stage and job layout as the shared templates, with
 `eclipse-temurin:25-jdk` in place of `oven/bun` and a Gradle-keyed cache.
 
-| File | Jobs |
-| --- | --- |
-| `.gitlab/ci/testing.yml` | `test:compile` (Kotlin has no separate typecheck), `test:unit` (+ JUnit report) |
-| `.gitlab/ci/build.yml` | `build:jar` — default branch only, jar as artifact |
-| `.gitlab/ci/release.yml` | on a `v*` tag: uploads the jar to the generic package registry, then creates a GitLab Release linking it |
+Two stages. Branches and merge requests only run the tests; **the jar is built
+solely on a tag**, so releasing is the only thing that produces an artifact.
 
-The jar takes its version from `CI_COMMIT_TAG` when one is present, so
-`git tag v1.2.0 && git push --tags` ships `leicraftclient-1.2.0.jar`. Otherwise
-`mod_version` in `gradle.properties` applies.
+| File | Stage | Jobs |
+| --- | --- | --- |
+| `.gitlab/ci/testing.yml` | `test` | `test:compile` (Kotlin has no separate typecheck), `test:unit` (+ JUnit report) |
+| `.gitlab/ci/release.yml` | `release` | `release:upload` builds the jar and pushes it to the generic package registry; `release:publish` creates the GitLab Release linking it |
+
+Both release jobs are gated on `$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/`.
+
+To cut a release, push a `v*` tag:
+
+```sh
+git tag v1.2.0
+git push origin v1.2.0
+```
+
+`build.gradle.kts` reads the version from `CI_COMMIT_TAG`, so that ships
+`leicraftclient-1.2.0.jar`; without a tag, `mod_version` in `gradle.properties`
+applies. `release:upload` hands the stripped version to `release:publish`
+through a dotenv artifact so both jobs address the same registry URL.
 
 ## Conventions
 
