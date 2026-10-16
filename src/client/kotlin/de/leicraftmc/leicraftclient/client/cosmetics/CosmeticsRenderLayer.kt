@@ -50,7 +50,13 @@ class CosmeticsRenderLayer(
             } else {
                 cosmetic.texture
             }
-            val renderType = RenderTypes.entityCutout(texture)
+            // Culled, like vanilla model parts. Without culling, boxes that share
+            // face area in the same plane -- common in flat mosaic models such as
+            // the sword -- render both coincident faces at identical depth and
+            // z-fight into speckled wrong-coloured pixels. Zero-thickness boxes
+            // still show from both sides: their front and back faces are
+            // coincident with opposite winding, so exactly one faces the camera.
+            val renderType = RenderTypes.entityCutoutCull(texture)
 
             for (attachment in cosmetic.model.attachments) {
                 val bone = when (attachment.attachTo) {

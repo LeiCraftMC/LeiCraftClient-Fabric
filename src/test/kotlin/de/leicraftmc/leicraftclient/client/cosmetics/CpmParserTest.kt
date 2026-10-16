@@ -285,4 +285,57 @@ class CpmParserTest {
           }]
         }
     """.trimIndent()
+
+    @Test
+    fun `faces wind so the outward normal is counter-clockwise`() {
+        // Vanilla cube faces are wound so the cross product of the first two
+        // edges points the same way as the face normal. The layer draws with
+        // backface culling, so getting this backwards hides every face --
+        // and before it was fixed it made coplanar boxes z-fight instead.
+        for (invert in listOf("xy", "xyz", "z", "")) {
+            val json = """
+                {
+                  "type": "PlayerItem", "textureSize": [64, 64],
+                  "models": [{
+                    "type": "ModelBox", "attachTo": "head", "invertAxis": "$invert",
+                    "boxes": [{"coordinates": [1, 2, 3, 2, 3, 4], "textureOffset": [0, 0]}]
+                  }]
+                }
+            """.trimIndent()
+            val quads = assertNotNull(CpmParser.parse(json)).attachments.single().root.quads
+            assertEquals(6, quads.size)
+            for ((i, q) in quads.withIndex()) {
+                val e1 = floatArrayOf(q.pos[3] - q.pos[0], q.pos[4] - q.pos[1], q.pos[5] - q.pos[2])
+                val e2 = floatArrayOf(q.pos[6] - q.pos[3], q.pos[7] - q.pos[4], q.pos[8] - q.pos[5])
+                val cx = e1[1] * e2[2] - e1[2] * e2[1]
+                val cy = e1[2] * e2[0] - e1[0] * e2[2]
+                val cz = e1[0] * e2[1] - e1[1] * e2[0]
+                val dot = cx * q.nx + cy * q.ny + cz * q.nz
+                assertTrue(dot > 0f, "invertAxis=\"$invert\" face $i winds inward (dot=$dot)")
+            }
+        }
+    }
+
+    @Test
+    fun `the sword bakes to the texels its atlas tile occupies`() {
+        // dia_sword is the densest model served: 31 coplanar boxes, each taking a
+        // small tile out of a tightly packed 32x32 atlas, so a UV that is off by a
+        // single texel shows a neighbouring tile's colours instead.
+        val model = load("dia_sword")
+        val root = model.attachments.single().root
+        val bone = root.children.single()
+
+        assertEquals(-0.04839f, bone.x, 1e-5f)
+        assertEquals(7.04839f, bone.y, 1e-5f)
+        assertEquals(2.5f, bone.z, 1e-5f)
+        assertEquals(Math.PI.toFloat(), bone.zRot.let { bone.xRot }, 1e-5f)
+        assertEquals(31 * 6, bone.quads.size)
+
+        // First box: coordinates [-8.95161, -8.95161, -0.75, 3, 3, 1] at
+        // textureOffset [0, 8], so its front face is the 3x3 tile at (1,9)-(4,12).
+        val front = bone.quads[0]
+        assertEquals(-1f, front.nz, 1e-6f)
+        val texels = front.uv.toList().chunked(2).map { (it[0] * 32f) to (it[1] * 32f) }
+        assertEquals(setOf(1f to 12f, 4f to 12f, 4f to 9f, 1f to 9f), texels.toSet())
+    }
 }

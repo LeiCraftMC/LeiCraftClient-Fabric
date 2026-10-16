@@ -34,7 +34,11 @@ loom {
             // Cosmetics are looked up by player name, so testing against a real
             // profile needs the dev client to use that name:
             //   ./gradlew runClient -PdevUsername=SomeName
-            (project.findProperty("devUsername") as String?)?.let {
+
+            val customName = System.getenv("DEV_MC_USERNAME")
+                ?: (project.findProperty("devUsername") as String?)
+
+            customName?.let {
                 programArgs("--username", it)
             }
         }

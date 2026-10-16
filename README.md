@@ -70,8 +70,16 @@ Three rules, all covered by tests:
    while the UV rects keep using the uninflated size.
 
 Both `textureOffset` (standard Minecraft box unwrap) and per-face
-`uvNorth`/`uvEast`/… are supported. Boxes with zero depth are common, which is
-why the layer renders with `entityCutout` (no backface culling).
+`uvNorth`/`uvEast`/… are supported.
+
+Faces are wound so the counter-clockwise normal points **outward**, matching
+vanilla, and the layer draws with `entityCutoutCull`. Culling matters: flat
+mosaic models (the diamond sword is 31 coplanar boxes) have boxes that share
+face area in the same plane, and without culling both coincident faces render at
+identical depth and z-fight into speckled wrong-coloured pixels. Zero-depth
+boxes — common in these models — still show from both sides, because their front
+and back faces are coincident with opposite winding, so exactly one faces the
+camera. An odd `invertAxis` flips handedness and the winding flips back with it.
 
 The face/UV mapping was cross-checked against the V1 `lc-client-skinview`
 Three.js renderer, which was validated against real OptiFine output.

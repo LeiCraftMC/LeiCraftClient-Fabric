@@ -221,8 +221,8 @@ object CpmParser {
         val mirrorTexture: String,
         val out: MutableList<CpmModel.Quad>,
     ) {
-        /** True when the mirror flips handedness and the winding must be reversed. */
-        val reversed = sx * sy * sz < 0f
+        /** True when the mirror flips handedness, cancelling the base reversal. */
+        val mirrored = sx * sy * sz < 0f
 
         @Suppress("LongParameterList")
         fun face(
@@ -261,7 +261,12 @@ object CpmParser {
                 u1 / texW, v2 / texH,
             )
 
-            if (reversed) {
+            // Corners are listed in texture order (TL, TR, BR, BL), which winds
+            // the face clockwise seen from outside -- the opposite of vanilla,
+            // where the counter-clockwise normal points outward. Reverse so the
+            // geometry can be drawn with backface culling. An odd `invertAxis`
+            // already flips handedness and cancels this out.
+            if (!mirrored) {
                 reverseQuad(pos, 3)
                 reverseQuad(uv, 2)
             }
