@@ -4,7 +4,6 @@
 
 stages:
   - test
-  - build
   - release
 
 variables:
@@ -15,5 +14,4 @@ variables:
 
 include:
   - local: ".gitlab/ci/testing.yml"
-  - local: ".gitlab/ci/build.yml"
   - local: ".gitlab/ci/release.yml"

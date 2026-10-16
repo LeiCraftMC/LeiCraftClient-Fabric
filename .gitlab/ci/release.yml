@@ -1,5 +1,8 @@
 # .gitlab/ci/release.yml - release stage, triggered by a `v*` tag.
 #
+# The jar is only ever built here: branch pipelines just run the tests, so
+# tagging is what produces an artifact.
+#
 # `release:upload` builds the jar and pushes it to the project's generic package
 # registry; `release:publish` then creates the GitLab Release pointing at it.
 # The two are split because building needs a JDK image and the Release API needs
@@ -26,6 +29,16 @@ release:upload:
         --header "JOB-TOKEN: $CI_JOB_TOKEN" \
         --upload-file "$JAR" \
         "$PACKAGE_REGISTRY/$VERSION/leicraftclient-$VERSION.jar"
+    # release:publish builds the asset URL from this, so both jobs agree on
+    # the version with the leading "v" stripped.
+    - echo "VERSION=$VERSION" > release.env
+  artifacts:
+    name: "leicraftclient-$CI_COMMIT_TAG"
+    paths:
+      - build/libs/*.jar
+    expire_in: 4 weeks
+    reports:
+      dotenv: release.env
 
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
