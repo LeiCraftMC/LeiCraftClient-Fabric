@@ -5,14 +5,20 @@ default:
   image: eclipse-temurin:25-jdk
   interruptible: true
   cache:
+    # cache:key:files takes at most two entries, so key on the two files that
+    # decide what gets resolved: build.gradle.kts for the dependency list and
+    # gradle.properties for the Minecraft, Loom and Fabric versions. A Gradle
+    # version bump reuses the key, which only means the new distribution is
+    # added to the cached wrapper dir.
     key:
       files:
-        - gradle/wrapper/gradle-wrapper.properties
         - build.gradle.kts
         - gradle.properties
     paths:
       - .gradle/caches/
       - .gradle/wrapper/
+  # gradlew is committed with the executable bit set; this is just a belt and
+  # braces in case a checkout drops it.
   before_script:
     - chmod +x ./gradlew
 
