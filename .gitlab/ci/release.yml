@@ -4,9 +4,10 @@
 # tagging is what produces an artifact.
 #
 # `release:upload` builds the jar and pushes it to the project's generic package
-# registry; `release:publish` then creates the GitLab Release pointing at it.
-# The two are split because building needs a JDK image and the Release API needs
-# release-cli.
+# registry; `release:publish` then creates the GitLab Release pointing at it, or
+# attaches the jar to the Release if one was already made by hand in the UI.
+# The two are split because building needs a JDK image and the Release API
+# calls need glab.
 
 release:upload:
   stage: release
@@ -43,24 +44,43 @@ release:upload:
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
 
+# This is a script rather than the `release:` keyword because the keyword runs
+# `glab release create --no-update`, which fails when the Release already
+# exists -- and creating a Release in the GitLab UI is also what pushes the tag
+# that starts this pipeline, so with that workflow it always exists.
 release:publish:
   stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  image: registry.gitlab.com/gitlab-org/cli:v1.123.0
   needs:
     - release:upload
+  variables:
+    # glab signs in with CI_JOB_TOKEN, which the Releases API accepts.
+    GLAB_ENABLE_CI_AUTOLOGIN: "true"
   before_script: []
   cache: {}
   script:
-    - echo "publishing release $CI_COMMIT_TAG"
-  release:
-    tag_name: "$CI_COMMIT_TAG"
-    name: "LeiCraftClient $CI_COMMIT_TAG"
-    description: "Automated release for $CI_COMMIT_TAG."
-    assets:
-      links:
-        - name: "leicraftclient-${VERSION}.jar"
-          url: "$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/leicraftclient/${VERSION}/leicraftclient-${VERSION}.jar"
-          link_type: package
+    - ASSET_NAME="leicraftclient-${VERSION}.jar"
+    - ASSET_URL="$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/leicraftclient/${VERSION}/${ASSET_NAME}"
+    - |
+      ASSETS="$(jq -nc --arg name "$ASSET_NAME" --arg url "$ASSET_URL" '[{name: $name, url: $url, link_type: "package"}]')"
+      if glab release view "$CI_COMMIT_TAG" -R "$CI_PROJECT_URL" -F json > release.json; then
+        # Made by hand: keep its name and notes and only attach the jar. A
+        # duplicate link name is rejected, so skip it if a retry already did.
+        if jq -e --arg name "$ASSET_NAME" 'any(.assets.links[]?; .name == $name)' release.json > /dev/null; then
+          echo "$ASSET_NAME is already attached to $CI_COMMIT_TAG"
+        else
+          glab release upload "$CI_COMMIT_TAG" -R "$CI_PROJECT_URL" --assets-links "$ASSETS"
+        fi
+      else
+        # --no-update: if the lookup above failed for any reason other than a
+        # missing Release, fail here instead of overwriting its name.
+        glab release create "$CI_COMMIT_TAG" -R "$CI_PROJECT_URL" \
+          --name "LeiCraftClient $CI_COMMIT_TAG" \
+          --notes "Automated release for $CI_COMMIT_TAG." \
+          --ref "$CI_COMMIT_SHA" \
+          --assets-links "$ASSETS" \
+          --no-update
+      fi
 
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
