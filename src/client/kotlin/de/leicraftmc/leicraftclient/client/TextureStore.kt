@@ -58,6 +58,18 @@ object TextureStore {
         }
     }
 
+    /**
+     * Forgets every registration so the next fetch uploads afresh.
+     *
+     * The GPU textures are left registered: re-uploading under the same key
+     * replaces the entry in the texture manager, which avoids a window where a
+     * render type resolves an identifier that no longer exists.
+     */
+    fun clear() {
+        registered.clear()
+        inFlight.clear()
+    }
+
     /** Identifier paths only allow `[a-z0-9/._-]`, but keys come from URLs and names. */
     private fun sanitise(key: String): String {
         val cleaned = key.lowercase().map { ch ->

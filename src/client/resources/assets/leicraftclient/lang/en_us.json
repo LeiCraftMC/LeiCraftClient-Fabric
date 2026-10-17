@@ -1,0 +1,9 @@
+{
+  "leicraftclient.menu.options": "LeiCraftClient",
+  "leicraftclient.options.title": "LeiCraftClient",
+  "leicraftclient.options.capes": "Custom capes",
+  "leicraftclient.options.cosmetics": "Custom cosmetics",
+  "leicraftclient.options.reload": "Reload capes & cosmetics",
+  "leicraftclient.options.reloading": "Refetching...",
+  "leicraftclient.options.website": "Open client.leicraftmc.de"
+}

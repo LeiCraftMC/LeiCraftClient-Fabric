@@ -11,6 +11,7 @@
     "homepage": "https://client.leicraftmc.de"
   },
   "license": "AGPL-3.0",
+  "icon": "assets/leicraftclient/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [

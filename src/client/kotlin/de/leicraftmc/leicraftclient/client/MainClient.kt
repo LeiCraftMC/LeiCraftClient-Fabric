@@ -2,6 +2,7 @@ package de.leicraftmc.leicraftclient.client
 
 import de.leicraftmc.leicraftclient.client.config.ClientConfig
 import de.leicraftmc.leicraftclient.client.cosmetics.CosmeticsRenderLayer
+import de.leicraftmc.leicraftclient.client.gui.PauseMenuEntry
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityRenderLayerRegistrationCallback
 import net.minecraft.client.model.player.PlayerModel
@@ -12,6 +13,7 @@ class MainClient : ClientModInitializer {
 
     override fun onInitializeClient() {
         ClientConfig.load()
+        PauseMenuEntry.register()
 
         LivingEntityRenderLayerRegistrationCallback.EVENT.register { _, renderer, helper, _ ->
             // Fires for every living entity renderer; only the player one carries

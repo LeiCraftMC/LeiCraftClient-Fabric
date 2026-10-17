@@ -4,7 +4,9 @@
   "package": "de.leicraftmc.leicraftclient.mixin.client",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "AbstractClientPlayerMixin"
+    "AbstractClientPlayerMixin",
+    "MinecraftTitleMixin",
+    "PlayerTabOverlayMixin"
   ],
   "injectors": {
     "defaultRequire": 1

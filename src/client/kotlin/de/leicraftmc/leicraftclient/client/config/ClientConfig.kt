@@ -23,13 +23,11 @@ object ClientConfig {
     var apiBaseUrl: String = DEFAULT_API_BASE
         private set
 
-    /** Whether custom capes are applied. */
+    /** Whether custom capes are applied. Toggled from the options screen. */
     var capesEnabled: Boolean = true
-        private set
 
-    /** Whether custom cosmetics are rendered. */
+    /** Whether custom cosmetics are rendered. Toggled from the options screen. */
     var cosmeticsEnabled: Boolean = true
-        private set
 
     /** How long a fetched player profile stays valid, in seconds. */
     var cacheSeconds: Long = 600

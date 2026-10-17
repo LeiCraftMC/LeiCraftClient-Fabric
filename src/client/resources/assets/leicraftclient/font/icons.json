@@ -1,0 +1,10 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "leicraftclient:gui/tab_icon.png",
+      "ascent": 7,
+      "chars": ["\uE000"]
+    }
+  ]
+}
