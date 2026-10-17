@@ -12,7 +12,11 @@ import net.minecraft.resources.Identifier
  * It is a glyph in a bitmap font the mod ships
  * (`assets/leicraftclient/font/icons.json`) rather than a blit, so it can be
  * appended to any [Component] and is positioned and scaled by the font
- * renderer. Swap `textures/gui/tab_icon.png` to change the artwork.
+ * renderer.
+ *
+ * `textures/gui/tab_icon.png` is the mod icon (`icon.png`) reduced to 8x8. The
+ * icon is drawn on an 8x8 pixel grid, so the reduction is lossless; regenerate
+ * the glyph from it whenever the icon changes so the two stay identical.
  */
 object TabListIcon {
 
