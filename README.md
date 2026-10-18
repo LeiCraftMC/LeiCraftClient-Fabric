@@ -23,7 +23,7 @@ and drop it in `.minecraft/mods/` together with these:
 | --- | --- | --- |
 | Minecraft | `26.3` | exact version; the mod is built against it |
 | Java | 25 | required by Minecraft 26.3 itself |
-| [Fabric Loader](https://fabricmc.net/use/installer/) | `>= 0.20.0` | |
+| [Fabric Loader](https://fabricmc.net/use/installer/) | `>= 0.19.5` | |
 | [Fabric API](https://modrinth.com/mod/fabric-api) | `0.163.0+26.3` or newer | |
 | [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) | `>= 1.14.2+kotlin.2.4.21` | **easy to miss** — a separate mod, not bundled |
 
@@ -35,6 +35,41 @@ mod uses, and no other mod pulls it in for you.
 Everyone who wants to *see* cosmetics needs the mod — each client fetches them
 from the backend itself. Players without it simply see vanilla skins, and your
 own cosmetics still show up for anyone who has it.
+
+### Other loaders
+
+The mod is built for Fabric only. Its Fabric surface is small, though — three
+plain `@Inject` mixins on vanilla methods and three Fabric API hooks — so
+loaders that can run Fabric mods should be able to load it. Neither of the
+setups below has been tested yet.
+
+**Quilt — should work.** Quilt Loader runs Fabric mods directly. Install these
+instead of Fabric Loader:
+
+| Dependency | Version | Notes |
+| --- | --- | --- |
+| [Quilt Loader](https://quiltmc.org/en/install/) | `>= 0.30.2-beta.1` | the stable `0.30.1` is too old, see below |
+| [Fabric API](https://modrinth.com/mod/fabric-api) | `0.163.0+26.3` or newer | the regular one; Quilted Fabric API (QSL) was discontinued in December 2025 and has no 26.x build |
+| [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) | `>= 1.14.2+kotlin.2.4.21` | |
+
+Quilt Loader tells the mods it loads which Fabric Loader version it stands in
+for, and both this mod and Fabric Language Kotlin require `>= 0.19.5`. The
+latest stable Quilt Loader, `0.30.1`, reports `0.19.3` and refuses to start;
+`0.30.2-beta.1` is the first that reports `0.19.5`.
+
+**NeoForge — not yet.** Fabric mods run on NeoForge through
+[Sinytra Connector](https://github.com/Sinytra/Connector), which as of October
+2026 has no build for Minecraft 26.3 (the newest targets 26.2), and this mod
+needs 26.3 exactly. Once Connector supports 26.3, the setup is NeoForge 26.3
+with Connector,
+[Forgified Fabric API](https://github.com/Sinytra/ForgifiedFabricAPI),
+[Launchpad](https://github.com/Sinytra/Launchpad) and Fabric Language Kotlin.
+Forgified Fabric API replaces Fabric API, so don't install both. NeoForge
+patches some vanilla classes, so the mixins may still clash with it; a native
+NeoForge build would be the dependable route.
+
+**Forge — no.** Nothing runs Fabric mods on Forge for current versions;
+Connector's Forge support ended with 1.20.1.
 
 ## Design, and why
 
