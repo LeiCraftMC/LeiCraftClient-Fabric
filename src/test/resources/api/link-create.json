@@ -4,7 +4,7 @@
   "message": "Link created",
   "data": {
     "code": "CKLLfYaNmOR_hs5mI1AfVKssrcZ5p3v9",
-    "url": "http://localhost:12560/link/minecraft?code=CKLLfYaNmOR_hs5mI1AfVKssrcZ5p3v9",
+    "url": "http://localhost:12332/link/minecraft?code=CKLLfYaNmOR_hs5mI1AfVKssrcZ5p3v9",
     "expires_at": 1792490791663
   }
 }

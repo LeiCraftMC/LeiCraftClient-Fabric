@@ -302,7 +302,7 @@ looked up by name — so to see a real player's capes and cosmetics on yourself:
 
 Offline accounts can't sign in, so linking and the wardrobe need a real
 Microsoft account (a launcher-started instance). To use a local API, set
-`apiBaseUrl` to e.g. `http://localhost:12550`.
+`apiBaseUrl` to e.g. `http://localhost:12331`.
 
 The fixtures in `src/test/resources/api/` are real responses from the
 API-Server; `src/test/resources/assets/` holds two stored assets named by their
