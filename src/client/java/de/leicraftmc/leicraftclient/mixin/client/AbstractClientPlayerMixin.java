@@ -2,10 +2,7 @@ package de.leicraftmc.leicraftclient.mixin.client;
 
 import com.mojang.authlib.GameProfile;
 import de.leicraftmc.leicraftclient.client.profiles.PlayerProfiles;
-import java.util.Optional;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.core.ClientAsset;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.PlayerSkin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -38,19 +35,6 @@ public abstract class AbstractClientPlayerMixin {
 		}
 
 		final GameProfile profile = ((AbstractClientPlayer) (Object) this).getGameProfile();
-		final Identifier cape = PlayerProfiles.INSTANCE.capeFor(profile.id(), profile.name());
-		if (cape == null) {
-			return;
-		}
-
-		// Both components must be passed explicitly: the single-argument
-		// constructor treats its argument as an asset id and rewrites the path to
-		// "textures/<id>.png", which would miss the texture we registered.
-		cir.setReturnValue(skin.with(PlayerSkin.Patch.create(
-			Optional.empty(),
-			Optional.of(new ClientAsset.ResourceTexture(cape, cape)),
-			Optional.empty(),
-			Optional.empty()
-		)));
+		cir.setReturnValue(PlayerProfiles.INSTANCE.skinWithCape(skin, profile.id(), profile.name()));
 	}
 }

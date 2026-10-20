@@ -14,6 +14,13 @@ import java.util.UUID
  */
 object OwnPlayer {
 
+    /**
+     * The entity id on the wardrobe preview's render state when there is no
+     * player entity (title screen), so render layers know whose state it is.
+     * Real entity ids are never negative.
+     */
+    const val PREVIEW_ENTITY_ID: Int = Int.MIN_VALUE
+
     fun uuids(): Set<UUID> {
         val minecraft = Minecraft.getInstance()
         val ids = linkedSetOf(minecraft.user.profileId)

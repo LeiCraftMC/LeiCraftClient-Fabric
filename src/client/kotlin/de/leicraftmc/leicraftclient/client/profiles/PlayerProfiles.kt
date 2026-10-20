@@ -11,7 +11,10 @@ import de.leicraftmc.leicraftclient.client.cosmetics.CpmModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import net.minecraft.core.ClientAsset
 import net.minecraft.resources.Identifier
+import net.minecraft.world.entity.player.PlayerSkin
+import java.util.Optional
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -98,6 +101,26 @@ object PlayerProfiles {
         if (!ClientConfig.capesEnabled) return null
         val cape = profile(uuid, name)?.cape ?: return null
         return AssetCache.texture(cape.texture)
+    }
+
+    /**
+     * [skin] with the player's LeiCraft cape swapped in, or [skin] itself when
+     * there is none. Used by the cape mixin and by the wardrobe's world-free
+     * preview, which has no player entity to patch.
+     */
+    fun skinWithCape(skin: PlayerSkin, uuid: UUID, name: String?): PlayerSkin {
+        val cape = capeFor(uuid, name) ?: return skin
+        // Both components must be passed explicitly: the single-argument
+        // constructor treats its argument as an asset id and rewrites the path to
+        // "textures/<id>.png", which would miss the texture we registered.
+        return skin.with(
+            PlayerSkin.Patch.create(
+                Optional.empty(),
+                Optional.of(ClientAsset.ResourceTexture(cape, cape)),
+                Optional.empty(),
+                Optional.empty(),
+            ),
+        )
     }
 
     /**

@@ -1,7 +1,9 @@
 package de.leicraftmc.leicraftclient.client.cosmetics
 
+import com.mojang.authlib.GameProfile
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
+import de.leicraftmc.leicraftclient.client.profiles.OwnPlayer
 import de.leicraftmc.leicraftclient.client.profiles.PlayerProfiles
 import de.leicraftmc.leicraftclient.client.profiles.VariantSelector
 import net.minecraft.client.Minecraft
@@ -45,7 +47,7 @@ class CosmeticsRenderLayer(
     ) {
         if (state.isInvisible) return
 
-        val profile = playerFor(state)?.gameProfile ?: return
+        val profile = profileFor(state) ?: return
         val skinModel = if (state.skin.model() == PlayerModelType.SLIM) VariantSelector.SLIM else VariantSelector.WIDE
         val cosmetics = PlayerProfiles.cosmeticsFor(profile.id, profile.name, skinModel)
         if (cosmetics.isEmpty()) return
@@ -130,13 +132,18 @@ class CosmeticsRenderLayer(
     /**
      * Profiles are keyed by UUID, but the render state only carries the entity
      * id, so resolve it against the client level. That is a hash lookup, and it
-     * avoids a mixin purely to copy the profile onto the render state. The
-     * wardrobe's inventory-style preview renders the local player, which is in
-     * the level too.
+     * avoids a mixin purely to copy the profile onto the render state. In a
+     * world the wardrobe's preview renders the local player, which is in the
+     * level too; on the title screen it renders a state of its own, marked
+     * with [OwnPlayer.PREVIEW_ENTITY_ID].
      */
-    private fun playerFor(state: AvatarRenderState): Player? {
-        val level = Minecraft.getInstance().level ?: return null
-        return level.getEntity(state.id) as? Player
+    private fun profileFor(state: AvatarRenderState): GameProfile? {
+        val minecraft = Minecraft.getInstance()
+        if (state.id == OwnPlayer.PREVIEW_ENTITY_ID) {
+            return GameProfile(minecraft.user.profileId, minecraft.user.name)
+        }
+        val level = minecraft.level ?: return null
+        return (level.getEntity(state.id) as? Player)?.gameProfile
     }
 
     private companion object {

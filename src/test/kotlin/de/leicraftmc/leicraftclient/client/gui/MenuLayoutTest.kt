@@ -45,7 +45,7 @@ class MenuLayoutTest {
     )
 
     private fun open(widgets: List<Widget>, anchorLabel: String): Int {
-        // Mirrors PauseMenuEntry: the anchor's y is read once, up front.
+        // Mirrors MenuEntry: the anchor's y is read once, up front.
         val rowY = widgets.single { it.label == anchorLabel }.y
         MenuLayout.openRow(widgets, rowY, { it.y }, { w, y -> w.y = y })
         return rowY

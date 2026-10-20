@@ -20,7 +20,7 @@ import net.minecraft.network.chat.Component
 import java.net.URI
 
 /**
- * Settings for the mod, reached from the pause menu.
+ * Settings for the mod, reached from the title screen and the pause menu.
  *
  * Toggles are written straight back to `config/leicraftclient.json` so they
  * survive a restart, and take effect on the next frame because the profile

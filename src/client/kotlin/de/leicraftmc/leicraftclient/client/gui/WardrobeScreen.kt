@@ -17,13 +17,18 @@ import net.minecraft.client.gui.components.ObjectSelectionList
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.input.KeyEvent
 import net.minecraft.client.input.MouseButtonEvent
+import net.minecraft.client.renderer.entity.state.AvatarRenderState
+import net.minecraft.client.renderer.entity.state.EntityRenderState
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState
 import net.minecraft.network.chat.CommonComponents
 import net.minecraft.network.chat.Component
-import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.EntityTypes
 import net.minecraft.world.entity.Pose
+import net.minecraft.world.entity.player.PlayerModelPart
+import net.minecraft.world.entity.player.PlayerSkin
 import org.joml.Quaternionf
 import org.joml.Vector3f
+import java.util.function.Supplier
 import kotlin.math.atan
 
 /**
@@ -62,6 +67,16 @@ class WardrobeScreen(private val parent: Screen?) : Screen(TITLE) {
     private var status: Component? = null
     private var previewYaw = 0f
     private var draggingPreview = false
+    private var ticks = 0
+
+    /**
+     * The account's own skin, for the preview when there is no player entity.
+     * `getGameProfile` waits for the profile the game fetches at start-up,
+     * which is long done by the time a menu is open.
+     */
+    private val ownSkin: Supplier<PlayerSkin> by lazy {
+        minecraft.skinManager.createLookup(minecraft.gameProfile, false)
+    }
 
     // -- widgets and layout ---------------------------------------------------
 
@@ -311,6 +326,7 @@ class WardrobeScreen(private val parent: Screen?) : Screen(TITLE) {
 
     override fun tick() {
         super.tick()
+        ticks++
         if (searchDueAt != 0L && System.currentTimeMillis() >= searchDueAt) {
             searchDueAt = 0L
             reloadItems()
@@ -327,7 +343,10 @@ class WardrobeScreen(private val parent: Screen?) : Screen(TITLE) {
 
     override fun mouseDragged(event: MouseButtonEvent, dx: Double, dy: Double): Boolean {
         if (draggingPreview) {
-            previewYaw = (previewYaw + dx.toFloat() * DRAG_DEGREES_PER_PIXEL) % 360f
+            // Subtracted: a smaller body yaw turns the player's front to the right
+            // on screen (vanilla's mouse-following uses the same sign), so the
+            // model follows the drag.
+            previewYaw = (previewYaw - dx.toFloat() * DRAG_DEGREES_PER_PIXEL) % 360f
             return true
         }
         return super.mouseDragged(event, dx, dy)
@@ -347,13 +366,8 @@ class WardrobeScreen(private val parent: Screen?) : Screen(TITLE) {
         super.extractBackground(graphics, mouseX, mouseY, a)
         graphics.fill(previewX0, previewY0, previewX1, previewY1, PANEL_COLOR)
 
-        val player = minecraft.player
-        if (player == null) {
-            graphics.centeredText(font, NO_PLAYER, (previewX0 + previewX1) / 2, (previewY0 + previewY1) / 2, MUTED_COLOR)
-            return
-        }
         val size = minOf((previewY1 - previewY0) * 0.36f, (previewX1 - previewX0) * 0.6f).toInt().coerceAtLeast(10)
-        extractPlayer(graphics, size, mouseX.toFloat(), mouseY.toFloat(), player)
+        extractPlayer(graphics, size, mouseX.toFloat(), mouseY.toFloat(), a)
     }
 
     override fun extractRenderState(graphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, a: Float) {
@@ -375,7 +389,7 @@ class WardrobeScreen(private val parent: Screen?) : Screen(TITLE) {
      * Vanilla's `InventoryScreen.extractEntityInInventoryFollowsMouse`, with an
      * extra body yaw from dragging so the cape on the back can be seen too.
      */
-    private fun extractPlayer(graphics: GuiGraphicsExtractor, size: Int, mouseX: Float, mouseY: Float, entity: LivingEntity) {
+    private fun extractPlayer(graphics: GuiGraphicsExtractor, size: Int, mouseX: Float, mouseY: Float, partialTick: Float) {
         val centerX = (previewX0 + previewX1) / 2f
         val centerY = (previewY0 + previewY1) / 2f
         val xAngle = atan((centerX - mouseX) / 40f)
@@ -384,10 +398,10 @@ class WardrobeScreen(private val parent: Screen?) : Screen(TITLE) {
         val xRotation = Quaternionf().rotateX(yAngle * 20f * DEGREES_TO_RADIANS)
         rotation.mul(xRotation)
 
-        val renderer = Minecraft.getInstance().entityRenderDispatcher.getRenderer(entity)
-        val state = renderer.createRenderState(entity, 1.0f)
+        val state = previewState(partialTick)
         state.shadowPieces.clear()
         state.outlineColor = 0
+        if (state is AvatarRenderState) showOwnSkinParts(state)
         if (state is LivingEntityRenderState) {
             state.bodyRot = 180f + xAngle * 20f + previewYaw
             state.yRot = xAngle * 20f
@@ -399,6 +413,50 @@ class WardrobeScreen(private val parent: Screen?) : Screen(TITLE) {
 
         val translation = Vector3f(0f, state.boundingBoxHeight / 2f + 0.0625f, 0f)
         graphics.entity(state, size.toFloat(), translation, rotation, xRotation, previewX0, previewY0, previewX1, previewY1)
+    }
+
+    /**
+     * In a world, the local player's own render state, as the inventory draws
+     * it. On the title screen there is no player entity, so the state is built
+     * from the account instead: its skin with the previewed cape, and
+     * [OwnPlayer.PREVIEW_ENTITY_ID] so the cosmetics layer finds the profile.
+     */
+    private fun previewState(partialTick: Float): EntityRenderState {
+        val player = minecraft.player
+        if (player != null) {
+            return minecraft.entityRenderDispatcher.getRenderer(player).createRenderState(player, 1.0f)
+        }
+
+        val user = minecraft.user
+        val dimensions = EntityTypes.PLAYER.dimensions
+        return AvatarRenderState().also {
+            it.entityType = EntityTypes.PLAYER
+            it.id = OwnPlayer.PREVIEW_ENTITY_ID
+            it.skin = PlayerProfiles.skinWithCape(ownSkin.get(), user.profileId, user.name)
+            it.boundingBoxWidth = dimensions.width()
+            it.boundingBoxHeight = dimensions.height()
+            it.eyeHeight = dimensions.eyeHeight()
+            // Drives the idle arm sway, as an entity's tick count does.
+            it.ageInTicks = ticks + partialTick
+        }
+    }
+
+    /**
+     * Takes the outer skin layers from the client's Skin Customization settings.
+     * The entity only carries them once the server has echoed those settings
+     * back, which not every server or proxy does, and a title-screen preview
+     * has no entity at all. The cape is always shown: it is what is being
+     * picked here.
+     */
+    private fun showOwnSkinParts(state: AvatarRenderState) {
+        val options = minecraft.options
+        state.showHat = options.isModelPartEnabled(PlayerModelPart.HAT)
+        state.showJacket = options.isModelPartEnabled(PlayerModelPart.JACKET)
+        state.showLeftSleeve = options.isModelPartEnabled(PlayerModelPart.LEFT_SLEEVE)
+        state.showRightSleeve = options.isModelPartEnabled(PlayerModelPart.RIGHT_SLEEVE)
+        state.showLeftPants = options.isModelPartEnabled(PlayerModelPart.LEFT_PANTS_LEG)
+        state.showRightPants = options.isModelPartEnabled(PlayerModelPart.RIGHT_PANTS_LEG)
+        state.showCape = true
     }
 
     // -- closing --------------------------------------------------------------
@@ -549,7 +607,6 @@ class WardrobeScreen(private val parent: Screen?) : Screen(TITLE) {
         val SAVE: Component = Component.translatable("leicraftclient.wardrobe.save")
         val SAVED: Component = Component.translatable("leicraftclient.wardrobe.saved")
         val NO_CAPE: Component = Component.translatable("leicraftclient.wardrobe.no_cape")
-        val NO_PLAYER: Component = Component.translatable("leicraftclient.wardrobe.no_player")
         val DRAG_HINT: Component = Component.translatable("leicraftclient.wardrobe.drag_hint")
         val EQUIPPED: Component = Component.translatable("leicraftclient.wardrobe.equipped").withStyle(ChatFormatting.GREEN)
         val OWNED: Component = Component.translatable("leicraftclient.wardrobe.owned").withStyle(ChatFormatting.GOLD)

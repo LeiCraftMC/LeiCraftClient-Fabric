@@ -19,9 +19,12 @@ API's OpenAPI document at `/docs/v1/openapi`. The OptiFine-style V1 routes
   (`uses_client`) get the LeiCraft mark before their name.
 - **Account linking** — links the Minecraft account to a LeiCraft account on the
   website, through a clickable link (options screen or `/leicraftclient link`).
-- **Wardrobe** — once linked, pick a cape and up to ten cosmetics in game, with a
-  live preview, and save them as the loadout (options screen or
+- **Wardrobe** — once linked, pick a cape and up to ten cosmetics, with a live
+  preview, and save them as the loadout (options screen or
   `/leicraftclient wardrobe`).
+
+The options screen is reached from the *LeiCraftClient* button on the title
+screen (below Realms, or below Mod Menu's *Mods*) and in the pause menu.
 
 ### Player profiles
 
@@ -81,6 +84,8 @@ choose it (or *No cape*); click a cosmetic to equip or remove it; the *Variant*
 button pins a variant of the selected cosmetic or leaves it on *Auto*. The
 preview on the left — drag it to turn — and your player in the world show the
 selection right away. *Save* replaces the loadout; *Cancel* or Esc discards it.
+The preview shows the outer skin layers as set in *Skin Customization*, and
+works from the title screen too, where it draws your account's skin.
 
 ### Commands
 
@@ -211,7 +216,7 @@ src/client/kotlin/.../client/
     WardrobeSelection.kt     the unsaved loadout and its rules
     AccountStatus.kt         one-line account state
     Notices.kt               chat lines, toasts, next-tick screens
-    PauseMenuEntry.kt, MenuLayout.kt, TabListIcon.kt
+    MenuEntry.kt, MenuLayout.kt, TabListIcon.kt
   command/LeiCraftCommands.kt  /leicraftclient
 src/client/java/.../mixin/client/
   AbstractClientPlayerMixin.java   cape swap (mixins must be Java)

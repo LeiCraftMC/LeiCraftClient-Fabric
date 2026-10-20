@@ -4,8 +4,8 @@ import de.leicraftmc.leicraftclient.client.auth.ClientAuth
 import de.leicraftmc.leicraftclient.client.command.LeiCraftCommands
 import de.leicraftmc.leicraftclient.client.config.ClientConfig
 import de.leicraftmc.leicraftclient.client.cosmetics.CosmeticsRenderLayer
+import de.leicraftmc.leicraftclient.client.gui.MenuEntry
 import de.leicraftmc.leicraftclient.client.gui.Notices
-import de.leicraftmc.leicraftclient.client.gui.PauseMenuEntry
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityRenderLayerRegistrationCallback
@@ -17,7 +17,7 @@ class MainClient : ClientModInitializer {
 
     override fun onInitializeClient() {
         ClientConfig.load()
-        PauseMenuEntry.register()
+        MenuEntry.register()
         Notices.register()
         LeiCraftCommands.register()
 

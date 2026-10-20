@@ -55,7 +55,7 @@ Under `src/client/kotlin/de/leicraftmc/leicraftclient/client/`:
 | `profiles` | `PlayerProfiles` (per-UUID cache, 250 ms batched lookups, wardrobe preview override), `LookupBatch` (pure: chunks of ≤ 100, name fallback for v3 UUIDs, answer matching), `VariantSelector` (pure), `OwnPlayer` |
 | `assets` | `AssetCache` (download once, SHA-256 check, `<gameDir>/leicraftclient/cache/assets`), `AssetIntegrity` (pure) |
 | `cosmetics` | `CpmParser`, `CpmModel`, `CosmeticsRenderLayer` |
-| `gui` | options screen, `WardrobeScreen`, `WardrobeSelection` (pure rules), pause-menu entry, tab icon, `Notices` |
+| `gui` | options screen, `WardrobeScreen`, `WardrobeSelection` (pure rules), `MenuEntry` (title-screen and pause-menu button) with `MenuLayout` (pure), tab icon, `Notices` |
 | `command` | `/leicraftclient` with `status`, `link`, `wardrobe` |
 
 Rules of thumb:
