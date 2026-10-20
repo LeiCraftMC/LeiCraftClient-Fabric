@@ -1,0 +1,14 @@
+{
+  "success": true,
+  "code": 200,
+  "message": "Link status retrieved successfully",
+  "data": {
+    "linked": true,
+    "user": {
+      "id": 2,
+      "display_name": "Steve",
+      "avatar_url": "https://cdn.discordapp.com/embed/avatars/0.png"
+    },
+    "pending_code_expires_at": null
+  }
+}

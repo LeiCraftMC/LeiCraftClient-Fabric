@@ -1,0 +1,110 @@
+{
+  "success": true,
+  "code": 200,
+  "message": "Loadout updated successfully",
+  "data": {
+    "cape": {
+      "id": 1,
+      "page_id": 1,
+      "collection_id": null,
+      "type": "cape",
+      "name": "Founder Cape",
+      "description": "",
+      "availability": "free",
+      "listed": true,
+      "texture": {
+        "id": "92a16c6a82846eda32b8084d6a0759d9b5ea59ae08f43269deccb5e4f3febf56",
+        "url": "http://localhost:12551/assets/92a16c6a82846eda32b8084d6a0759d9b5ea59ae08f43269deccb5e4f3febf56.png"
+      },
+      "preview": null,
+      "variants": [],
+      "sort_order": 0,
+      "published_at": 1792490190473,
+      "created_at": 1792490190000
+    },
+    "cosmetics": [
+      {
+        "product": {
+          "id": 2,
+          "page_id": 1,
+          "collection_id": null,
+          "type": "cosmetic",
+          "name": "Top Hat",
+          "description": "",
+          "availability": "free",
+          "listed": true,
+          "texture": null,
+          "preview": null,
+          "variants": [
+            {
+              "id": 1,
+              "name": "Wide",
+              "skin_model": "wide",
+              "model": {
+                "id": "d574b5a67cc29db6993bb25baa9ea1630b6283ad05c7eab5b7e64d385858d0dc",
+                "url": "http://localhost:12551/assets/d574b5a67cc29db6993bb25baa9ea1630b6283ad05c7eab5b7e64d385858d0dc.json"
+              },
+              "texture": {
+                "id": "8b194f797043b59c7db8b5e99ea46ad96f6a977cb647f7507b9f1bd396f3508e",
+                "url": "http://localhost:12551/assets/8b194f797043b59c7db8b5e99ea46ad96f6a977cb647f7507b9f1bd396f3508e.png"
+              },
+              "sort_order": 0
+            },
+            {
+              "id": 2,
+              "name": "Slim",
+              "skin_model": "slim",
+              "model": {
+                "id": "187a59aeb8dcdb04901c5f1d0b651318137836a76313a7c11a111c6ec61dacff",
+                "url": "http://localhost:12551/assets/187a59aeb8dcdb04901c5f1d0b651318137836a76313a7c11a111c6ec61dacff.json"
+              },
+              "texture": {
+                "id": "bbe822054123ea71c7738182452f7b67bffe6e748b1065c22d951ae9e8a97db7",
+                "url": "http://localhost:12551/assets/bbe822054123ea71c7738182452f7b67bffe6e748b1065c22d951ae9e8a97db7.png"
+              },
+              "sort_order": 1
+            }
+          ],
+          "sort_order": 0,
+          "published_at": 1792490190477,
+          "created_at": 1792490190000
+        },
+        "variant_id": null
+      },
+      {
+        "product": {
+          "id": 3,
+          "page_id": 1,
+          "collection_id": null,
+          "type": "cosmetic",
+          "name": "Golden Crown",
+          "description": "",
+          "availability": "exclusive",
+          "listed": true,
+          "texture": null,
+          "preview": null,
+          "variants": [
+            {
+              "id": 3,
+              "name": "Default",
+              "skin_model": "any",
+              "model": {
+                "id": "be916bcf9d88c9a05ceb7f8f397be680ad58b47c6156f3ee7922d04a629a87fc",
+                "url": "http://localhost:12551/assets/be916bcf9d88c9a05ceb7f8f397be680ad58b47c6156f3ee7922d04a629a87fc.json"
+              },
+              "texture": {
+                "id": "2b5b5796da4b351ffd58745a9bbbf67b227c3c4e53231dfbe866d85ad7f14681",
+                "url": "http://localhost:12551/assets/2b5b5796da4b351ffd58745a9bbbf67b227c3c4e53231dfbe866d85ad7f14681.png"
+              },
+              "sort_order": 0
+            }
+          ],
+          "sort_order": 0,
+          "published_at": 1792490190521,
+          "created_at": 1792490190000
+        },
+        "variant_id": 3
+      }
+    ]
+  }
+}

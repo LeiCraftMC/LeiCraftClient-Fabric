@@ -1,0 +1,1 @@
+{"type":"PlayerItem","credit":"seed 170 0376d249-8144-4b39-a12f-4e8bf2fa361c","textureSize":[64,32],"models":[{"type":"ModelBox","invertAxis":"xy","translate":[0,10,0],"boxes":[{"coordinates":[-4,0,-4,8,2,8],"textureOffset":[0,0]}],"attachTo":"head","submodels":[{"id":"top","invertAxis":"xy","translate":[0,2,0],"boxes":[{"coordinates":[-2,0,-2,4,3,4],"textureOffset":[0,10]}]}]}]}

@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "code": 200,
+  "message": "Challenge created",
+  "data": {
+    "challenge_id": "23f11f23bbef83992d973e8bc2f3b9d8",
+    "server_id": "ff12551518b0d4314bbc655bb8a664a9a9081f86",
+    "expires_at": 1792490310567
+  }
+}

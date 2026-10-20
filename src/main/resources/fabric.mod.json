@@ -3,7 +3,7 @@
   "id": "leicraftclient",
   "version": "${version}",
   "name": "LeiCraftClient",
-  "description": "Custom capes and cosmetics for LeiCraft, served by the LeiCraft cosmetics backend. Reads the same OptiFine-style model and cape formats the previous client used.",
+  "description": "Capes, cosmetics, account linking and an in-game wardrobe for the LeiCraft Client, served by the LeiCraft Client API.",
   "authors": [
     "LeiCraft"
   ],

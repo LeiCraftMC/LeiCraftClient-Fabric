@@ -11,9 +11,12 @@ import java.util.concurrent.ConcurrentHashMap
  * Registers downloaded PNGs with Minecraft's texture manager and hands back the
  * [Identifier] to draw them with.
  *
- * Uploading touches the GPU, so it is always deferred to the render thread. A
- * key is only uploaded once -- cosmetic textures are shared between every player
- * wearing that cosmetic, and capes between everyone wearing the same cape.
+ * Keys are asset ids (SHA-256 of the file). Assets are content-addressed, so a
+ * key is uploaded once per game session and never needs replacing -- a changed
+ * cape or cosmetic texture arrives under a new id. Every player wearing the
+ * same item shares the one GPU texture.
+ *
+ * Uploading touches the GPU, so it is always deferred to the render thread.
  */
 object TextureStore {
 
@@ -48,7 +51,7 @@ object TextureStore {
                     registered[key] = id
                     future.complete(id)
                 } catch (e: Exception) {
-                    LeiCraftClient.LOGGER.warn("Could not decode texture for {}", key, e)
+                    LeiCraftClient.LOGGER.warn("Could not decode texture {}", key, e)
                     future.completeExceptionally(e)
                 } finally {
                     inFlight.remove(key)
@@ -58,23 +61,11 @@ object TextureStore {
         }
     }
 
-    /**
-     * Forgets every registration so the next fetch uploads afresh.
-     *
-     * The GPU textures are left registered: re-uploading under the same key
-     * replaces the entry in the texture manager, which avoids a window where a
-     * render type resolves an identifier that no longer exists.
-     */
-    fun clear() {
-        registered.clear()
-        inFlight.clear()
-    }
-
-    /** Identifier paths only allow `[a-z0-9/._-]`, but keys come from URLs and names. */
+    /** Identifier paths only allow `[a-z0-9/._-]`; asset ids already fit, this is a guard. */
     private fun sanitise(key: String): String {
         val cleaned = key.lowercase().map { ch ->
             if (ch in 'a'..'z' || ch in '0'..'9' || ch == '/' || ch == '.' || ch == '_' || ch == '-') ch else '_'
         }.joinToString("")
-        return "dynamic/$cleaned"
+        return "asset/$cleaned"
     }
 }

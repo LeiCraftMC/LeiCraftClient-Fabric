@@ -1,17 +1,96 @@
 # LeiCraftClient (Fabric)
 
-Custom capes and cosmetics for LeiCraft, on Minecraft 26.3 / Fabric.
+Capes, cosmetics, account linking and an in-game wardrobe for the LeiCraft
+Client, on Minecraft 26.3 / Fabric.
 
-It talks to the existing cosmetics backend (`capesapi.leicraftmc.de`) and reads
-the same OptiFine-style formats the V1 client used, so no server-side change and
-no hosts-file redirect are needed any more — the mod calls the domain directly.
+It talks to the LeiCraft Client API (`https://api.client.leicraftmc.de`, V2).
+The contract is `API-Server/docs/client-integration.md`; exact schemas are in the
+API's OpenAPI document at `/docs/v1/openapi`. The OptiFine-style V1 routes
+(`/capes/<name>.png`, `/users/<name>.cfg`) are gone, with no compatibility layer.
 
 ## What it does
 
-- **Capes** — fetches `/capes/<name>.png` and patches it into the player's skin.
-- **Cosmetics** — fetches `/users/<name>.cfg`, then each listed OptiFine
-  "Custom Player Model" (`model.cfg`) and its texture, and renders them attached
-  to the vanilla player bones.
+- **Capes** — every player's cape comes from their profile and is patched into
+  their skin, so vanilla handles it (the cape toggle, elytra, chest offsets).
+- **Cosmetics** — OptiFine *PlayerItem* models drawn on the vanilla player
+  bones. A cosmetic can ship one variant per skin model; the mod draws the one
+  that fits the wearer (see *Skin variants*).
+- **Tab-list badge** — players who used the LeiCraft Client in the last 30 days
+  (`uses_client`) get the LeiCraft mark before their name.
+- **Account linking** — links the Minecraft account to a LeiCraft account on the
+  website, through a clickable link (options screen or `/leicraftclient link`).
+- **Wardrobe** — once linked, pick a cape and up to ten cosmetics in game, with a
+  live preview, and save them as the loadout (options screen or
+  `/leicraftclient wardrobe`).
+
+### Player profiles
+
+Players are identified by **UUID** (`GameProfile.id()`). Drawing a player is a
+map read; a miss or an expired entry queues the player, and every 250 ms the
+queue goes out as `POST /v1/players/lookup` batches of at most 100. Players
+without a profile are omitted by the API and cached as "nothing to render".
+Profiles stay valid for `cacheSeconds` (600 by default); a `429` pauses lookups
+for the `Retry-After` time instead of retrying.
+
+On offline-mode servers players get a name-based (version 3) UUID the API cannot
+know, so those are looked up by name instead (the API matches the name the
+account last verified with). Other UUIDs — NPCs, for instance — are not sent.
+
+### Assets
+
+Asset ids are the SHA-256 of the file and their URLs never change content, so
+each id is downloaded once, checked against its id (a mismatch is rejected), and
+kept in `<gameDir>/leicraftclient/cache/assets/<id>.<png|json>`. Within a session,
+textures are uploaded once per id and models parsed once per id. A changed
+texture arrives under a new id, so nothing is re-downloaded on a refresh.
+
+### Skin variants
+
+For each equipped cosmetic the variant drawn is: the pinned `variant_id` if set;
+otherwise the first variant whose `skin_model` matches the wearer's skin
+(`slim` / `wide`); otherwise the first `any` variant; otherwise the first one.
+Models with `usePlayerTexture` are drawn with the wearer's skin.
+
+### Signing in
+
+Linking and the wardrobe need a client session. Once the game has started, the
+mod signs in in the background with the game's own Minecraft session, the way a
+server checks a joining player — the access token never leaves the game:
+
+1. `POST /v1/client/auth/challenge` returns a one-time `server_id`.
+2. The game calls Mojang's `joinServer(profileId, accessToken, serverId)`
+   (`Minecraft.services().sessionService()`).
+3. `POST /v1/client/auth/verify` returns a client token, valid 7 days, kept in
+   `config/leicraftclient-session.json` and reused while it is valid for the
+   same account. A `401` later on triggers one new handshake.
+
+Offline and dev accounts can't do this; they still see everyone's capes and
+cosmetics. Set `accountServicesEnabled` to `false` to skip signing in entirely.
+
+### Linking and the wardrobe
+
+*Link account* creates a one-time link (valid 10 minutes), opens it in the
+browser (through vanilla's confirm-link screen) and also posts it in chat as a
+clickable link. You log in with Discord on the website and confirm; the mod
+notices within a few seconds and shows "Linked to …".
+
+The wardrobe lists everything the linked account can equip — free listed items
+and the exclusives you own (marked *Owned*) — on two tabs, *Capes* and
+*Cosmetics*, with a search box and *Load more* for long lists. Click a cape to
+choose it (or *No cape*); click a cosmetic to equip or remove it; the *Variant*
+button pins a variant of the selected cosmetic or leaves it on *Auto*. The
+preview on the left — drag it to turn — and your player in the world show the
+selection right away. *Save* replaces the loadout; *Cancel* or Esc discards it.
+
+### Commands
+
+Client-side only:
+
+| Command | Does |
+| --- | --- |
+| `/leicraftclient status` | sign-in and link state (also the bare `/leicraftclient`) |
+| `/leicraftclient link` | link the account; prints the clickable link in chat |
+| `/leicraftclient wardrobe` | open the wardrobe (needs a linked account) |
 
 ## Requirements
 
@@ -33,13 +112,14 @@ is the one people forget: it ships the Kotlin runtime plus the coroutines this
 mod uses, and no other mod pulls it in for you.
 
 Everyone who wants to *see* cosmetics needs the mod — each client fetches them
-from the backend itself. Players without it simply see vanilla skins, and your
+from the API itself. Players without it simply see vanilla skins, and your
 own cosmetics still show up for anyone who has it.
 
 ### Other loaders
 
 The mod is built for Fabric only. Its Fabric surface is small, though — three
-plain `@Inject` mixins on vanilla methods and three Fabric API hooks — so
+plain `@Inject` mixins on vanilla methods and a handful of Fabric API hooks
+(render layer, screen and tick events, client lifecycle, client commands) — so
 loaders that can run Fabric mods should be able to load it. Neither of the
 setups below has been tested yet.
 
@@ -78,9 +158,11 @@ The guiding constraint was **minimum maintenance per Minecraft update**.
 - **No GeckoLib.** OptiFine CPMs are static boxes — no animation — so GeckoLib's
   reason to exist goes unused, and it would add both a fast-moving dependency
   and a model conversion step. The models are parsed into plain geometry instead.
-- **One mixin.** Only `AbstractClientPlayer#getSkin` is patched, to swap in the
-  cape. Everything vanilla does with capes (the skin-customisation toggle,
-  elytra swapping, chest-equipment offsets) keeps working untouched.
+- **Three small mixins.** `AbstractClientPlayer#getSkin` is patched to swap in
+  the cape, so everything vanilla does with capes (the skin-customisation
+  toggle, elytra swapping, chest-equipment offsets) keeps working untouched.
+  The other two only rename the window (`Minecraft#createTitle`) and add the
+  tab-list badge (`PlayerTabOverlay#getNameForDisplay`).
 - **Cosmetics need no mixin at all.** They register through Fabric's
   `LivingEntityRenderLayerRegistrationCallback`.
 - **No OpenGL.** Geometry goes through `submitCustomGeometry` and vanilla's
@@ -88,24 +170,56 @@ The guiding constraint was **minimum maintenance per Minecraft update**.
   break it.
 - **Cosmetics reuse vanilla bone transforms** via `ModelPart.translateAndRotate`,
   so they follow every vanilla animation for free.
+- **Batched, content-addressed fetching.** One lookup request covers up to 100
+  players, and an asset is downloaded once ever (then read from the disk cache),
+  so a crowded server costs a few requests rather than several per player.
+- **Vanilla GUI only.** The options screen and the wardrobe use vanilla widgets
+  and vanilla's inventory-style player preview; no GUI library to update.
 
 ## Layout
 
 ```
 src/client/kotlin/.../client/
-  MainClient.kt              entrypoint; registers the render layer
-  TextureStore.kt            uploads downloaded PNGs on the render thread
-  config/ClientConfig.kt     config/leicraftclient.json
-  api/CapesApi.kt            backend HTTP
-  cape/CapeManager.kt        per-player cape cache
+  MainClient.kt              entrypoint; registers hooks, starts sign-in
+  LeiCraftClient.kt          mod id, logger, version, background scope
+  LeiCraftUsers.kt           tab-list badge (uses_client)
+  TextureStore.kt            uploads PNGs on the render thread, by asset id
+  config/ClientConfig.kt     config/leicraftclient.json (+ V1 migration)
+  api/
+    LeiCraftApi.kt           HTTP: endpoints, Bearer token, 401 -> re-sign-in
+    ApiResult.kt             envelope parsing -> Ok / Error(status, message)
+    ApiModels.kt             response types, read by hand from Gson's tree
+    BackendGate.kt           concurrency limit, per-route 429 back-off
+  auth/
+    ClientAuth.kt            Mojang handshake, session file, sign-in state
+    AccountLinking.kt        link / unlink, polling the link status
+  profiles/
+    PlayerProfiles.kt        per-UUID profile cache, batched lookups, preview
+    LookupBatch.kt           queue -> lookup requests (<= 100), answer matching
+    VariantSelector.kt       which cosmetic variant to draw
+    OwnPlayer.kt             the local player's UUIDs, loadout -> profile
+  assets/
+    AssetCache.kt            download once, verify, disk + memory caches
+    AssetIntegrity.kt        SHA-256 / asset id checks
   cosmetics/
-    CpmParser.kt             model.cfg -> geometry   <- the delicate part
+    CpmParser.kt             model JSON -> geometry   <- the delicate part
     CpmModel.kt              baked geometry types
-    CosmeticsManager.kt      per-player cosmetics cache
     CosmeticsRenderLayer.kt  drawing
+  gui/
+    LeiCraftOptionsScreen.kt options + "LeiCraft account" section
+    WardrobeScreen.kt        the wardrobe (preview, tabs, search, list)
+    WardrobeSelection.kt     the unsaved loadout and its rules
+    AccountStatus.kt         one-line account state
+    Notices.kt               chat lines, toasts, next-tick screens
+    PauseMenuEntry.kt, MenuLayout.kt, TabListIcon.kt
+  command/LeiCraftCommands.kt  /leicraftclient
 src/client/java/.../mixin/client/
   AbstractClientPlayerMixin.java   cape swap (mixins must be Java)
-src/test/kotlin/...              CPM transform regression tests
+  PlayerTabOverlayMixin.java       tab-list badge
+  MinecraftTitleMixin.java         window title
+src/test/kotlin/...              CPM transform, API parsing, batching, variants,
+                                 asset hashing, config migration, wardrobe rules
+src/test/resources/api/          real API responses used as fixtures
 ```
 
 ## The CPM coordinate transform
@@ -144,8 +258,10 @@ Three.js renderer, which was validated against real OptiFine output.
 
 ### Format coverage
 
-Every key used by the models the backend currently serves is supported (all 10
-parse, verified by a key census). Against the full
+Every key used by the models the V1 backend served is supported (all 10
+parse, verified by a key census), and the V2 API stores the same OptiFine
+*PlayerItem* format. The API strips a model-level `texture` key on upload; the
+mod always uses the variant's texture. Against the full
 [OptiFine part spec](https://optifine.readthedocs.io/cem_parts.html):
 
 | Field | Status |
@@ -173,15 +289,24 @@ Needs **JDK 25** (Minecraft 26.3 requires it).
 
 ```sh
 ./gradlew build          # jar in build/libs
-./gradlew test           # CPM transform tests
+./gradlew test           # unit tests
 ./gradlew runClient      # dev client
 ```
 
-Cosmetics are keyed by player name, so to see a real profile in dev:
+The dev client runs an offline account (name-based UUID), whose profile is
+looked up by name — so to see a real player's capes and cosmetics on yourself:
 
 ```sh
 ./gradlew runClient -PdevUsername=SomeName
 ```
+
+Offline accounts can't sign in, so linking and the wardrobe need a real
+Microsoft account (a launcher-started instance). To use a local API, set
+`apiBaseUrl` to e.g. `http://localhost:12550`.
+
+The fixtures in `src/test/resources/api/` are real responses from the
+API-Server; `src/test/resources/assets/` holds two stored assets named by their
+SHA-256 (kept byte-exact by `.gitattributes`).
 
 ### Note on the toolchain
 
@@ -196,10 +321,22 @@ has **no `mappings` dependency**, and uses plain `implementation` rather than
 
 | key | default | meaning |
 | --- | --- | --- |
-| `apiBaseUrl` | `https://capesapi.leicraftmc.de` | backend root, no trailing slash |
+| `apiBaseUrl` | `https://api.client.leicraftmc.de` | API root, no trailing slash |
+| `websiteUrl` | `https://client.leicraftmc.de` | opened by the options screen's website button |
 | `capesEnabled` | `true` | apply custom capes |
 | `cosmeticsEnabled` | `true` | render cosmetics |
-| `cacheSeconds` | `600` | how long a fetched profile stays valid |
+| `accountServicesEnabled` | `true` | sign in with the Minecraft session (linking, wardrobe); `false` = only read public profiles |
+| `cacheSeconds` | `600` | how long a fetched profile stays valid (minimum 30) |
+
+A config still pointing at the V1 backend (`https://capesapi.leicraftmc.de`) is
+moved to the new default on load, and missing keys are written back.
+
+Other files the mod writes:
+
+| path | contents |
+| --- | --- |
+| `config/leicraftclient-session.json` | the client token (`token`, `expires_at`, `uuid`) — keep it private |
+| `<gameDir>/leicraftclient/cache/assets/` | downloaded assets, `<sha256>.png` / `.json`; safe to delete |
 
 ## CI
 
@@ -244,9 +381,14 @@ In rough order of likelihood to break:
 1. `CosmeticsRenderLayer` — the render pipeline is the thing Mojang keeps
    changing. Check `SubmitNodeCollector.submitCustomGeometry`, `RenderTypes`
    and the `VertexConsumer` setters.
-2. `AbstractClientPlayerMixin` — check `PlayerSkin`/`PlayerSkin.Patch` still
+2. `WardrobeScreen` — GUI rendering (`GuiGraphicsExtractor`, the
+   `extractRenderState` / `extractBackground` hooks) and its copy of
+   `InventoryScreen.extractEntityInInventoryFollowsMouse`.
+3. `AbstractClientPlayerMixin` — check `PlayerSkin`/`PlayerSkin.Patch` still
    look the same.
-3. `MainClient` — Fabric renames its rendering callbacks occasionally.
+4. `ClientAuth` — the handshake uses `Minecraft.services().sessionService()`
+   (authlib `SessionService.joinServer`) and `Minecraft.getUser()`.
+5. `MainClient` — Fabric renames its rendering callbacks occasionally.
 
 `CpmParser` depends on no Minecraft types, so it should never need touching;
 its tests run on a plain JVM.

@@ -1,0 +1,5 @@
+{
+  "success": false,
+  "code": 429,
+  "message": "Too many requests. Try again later."
+}

@@ -2,6 +2,8 @@ package de.leicraftmc.leicraftclient.client.cosmetics
 
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
+import de.leicraftmc.leicraftclient.client.profiles.PlayerProfiles
+import de.leicraftmc.leicraftclient.client.profiles.VariantSelector
 import net.minecraft.client.Minecraft
 import net.minecraft.client.model.player.PlayerModel
 import net.minecraft.client.renderer.SubmitNodeCollector
@@ -12,6 +14,7 @@ import net.minecraft.client.renderer.rendertype.RenderType
 import net.minecraft.client.renderer.rendertype.RenderTypes
 import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.entity.player.PlayerModelType
 import org.joml.Quaternionf
 
 /**
@@ -21,6 +24,9 @@ import org.joml.Quaternionf
  * Each cosmetic hangs off a vanilla bone and reuses that bone's own transform
  * via [net.minecraft.client.model.geom.ModelPart.translateAndRotate], which
  * keeps cosmetics glued to the body through every vanilla animation for free.
+ *
+ * Which variant of a cosmetic is drawn depends on the wearer's skin model
+ * ([VariantSelector]); `usePlayerTexture` models are drawn with the wearer's skin.
  *
  * Units follow vanilla: the pose stack works in blocks, so model coordinates are
  * divided by 16 exactly where [net.minecraft.client.model.geom.ModelPart] does.
@@ -39,17 +45,14 @@ class CosmeticsRenderLayer(
     ) {
         if (state.isInvisible) return
 
-        val username = usernameFor(state) ?: return
-        val cosmetics = CosmeticsManager.cosmeticsFor(username)
+        val profile = playerFor(state)?.gameProfile ?: return
+        val skinModel = if (state.skin.model() == PlayerModelType.SLIM) VariantSelector.SLIM else VariantSelector.WIDE
+        val cosmetics = PlayerProfiles.cosmeticsFor(profile.id, profile.name, skinModel)
         if (cosmetics.isEmpty()) return
 
         val model = parentModel
         for (cosmetic in cosmetics) {
-            val texture = if (cosmetic.model.usePlayerTexture) {
-                state.skin.body().texturePath()
-            } else {
-                cosmetic.texture
-            }
+            val texture = cosmetic.texture ?: state.skin.body().texturePath()
             // Culled, like vanilla model parts. Without culling, boxes that share
             // face area in the same plane -- common in flat mosaic models such as
             // the sword -- render both coincident faces at identical depth and
@@ -125,14 +128,15 @@ class CosmeticsRenderLayer(
     }
 
     /**
-     * The backend is keyed by name, but the render state only carries the entity
+     * Profiles are keyed by UUID, but the render state only carries the entity
      * id, so resolve it against the client level. That is a hash lookup, and it
-     * avoids a second mixin purely to copy the name onto the render state.
+     * avoids a mixin purely to copy the profile onto the render state. The
+     * wardrobe's inventory-style preview renders the local player, which is in
+     * the level too.
      */
-    private fun usernameFor(state: AvatarRenderState): String? {
+    private fun playerFor(state: AvatarRenderState): Player? {
         val level = Minecraft.getInstance().level ?: return null
-        val player = level.getEntity(state.id) as? Player ?: return null
-        return player.gameProfile.name
+        return level.getEntity(state.id) as? Player
     }
 
     private companion object {

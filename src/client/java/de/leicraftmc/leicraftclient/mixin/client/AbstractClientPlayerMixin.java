@@ -1,6 +1,7 @@
 package de.leicraftmc.leicraftclient.mixin.client;
 
-import de.leicraftmc.leicraftclient.client.cape.CapeManager;
+import com.mojang.authlib.GameProfile;
+import de.leicraftmc.leicraftclient.client.profiles.PlayerProfiles;
 import java.util.Optional;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.ClientAsset;
@@ -17,10 +18,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Patching the skin rather than cloning {@code CapeLayer} keeps the cape subject
  * to everything vanilla does with it -- the cape toggle in skin customisation,
  * elytra swapping, chest-equipment offsets -- so there is nothing of vanilla's
- * cape handling to keep in sync on a Minecraft update.
+ * cape handling to keep in sync on a Minecraft update. Elytra without their own
+ * texture fall back to the cape, as in vanilla.
+ *
+ * The cape is looked up by the player's UUID ({@link PlayerProfiles}), which is a
+ * map read: this runs once per player per frame.
  *
  * Mixins must be Java: the Mixin processor does not handle Kotlin classes
- * reliably, so this delegates straight into {@link CapeManager}.
+ * reliably, so this delegates straight into Kotlin.
  */
 @Mixin(AbstractClientPlayer.class)
 public abstract class AbstractClientPlayerMixin {
@@ -32,8 +37,8 @@ public abstract class AbstractClientPlayerMixin {
 			return;
 		}
 
-		final AbstractClientPlayer self = (AbstractClientPlayer) (Object) this;
-		final Identifier cape = CapeManager.INSTANCE.capeFor(self.getGameProfile().name());
+		final GameProfile profile = ((AbstractClientPlayer) (Object) this).getGameProfile();
+		final Identifier cape = PlayerProfiles.INSTANCE.capeFor(profile.id(), profile.name());
 		if (cape == null) {
 			return;
 		}

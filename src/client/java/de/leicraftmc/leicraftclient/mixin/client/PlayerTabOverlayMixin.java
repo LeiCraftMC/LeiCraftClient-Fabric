@@ -1,5 +1,6 @@
 package de.leicraftmc.leicraftclient.mixin.client;
 
+import com.mojang.authlib.GameProfile;
 import de.leicraftmc.leicraftclient.client.LeiCraftUsers;
 import de.leicraftmc.leicraftclient.client.gui.TabListIcon;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
@@ -31,8 +32,8 @@ public abstract class PlayerTabOverlayMixin {
 			return;
 		}
 
-		final String username = info.getProfile().name();
-		if (username == null || !LeiCraftUsers.INSTANCE.isKnown(username)) {
+		final GameProfile profile = info.getProfile();
+		if (profile == null || profile.id() == null || !LeiCraftUsers.INSTANCE.isKnown(profile.id(), profile.name())) {
 			return;
 		}
 

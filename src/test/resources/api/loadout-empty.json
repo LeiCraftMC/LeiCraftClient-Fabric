@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "code": 200,
+  "message": "Loadout retrieved successfully",
+  "data": {
+    "cape": null,
+    "cosmetics": []
+  }
+}

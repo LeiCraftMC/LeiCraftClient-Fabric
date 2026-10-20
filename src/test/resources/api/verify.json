@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "code": 200,
+  "message": "Minecraft account verified",
+  "data": {
+    "token": "lcc_client_91b869dd8a96c1a891862f98775727ad1b0ff7bcc9c4aa077958c6714fc37e9b:d71c03c3e37d9ff66cb26c85742e619206370a4255d52e76b02d131a108409bc",
+    "expires_at": 1793094990816,
+    "account": {
+      "uuid": "4566e69f-c907-48ee-8d71-d7ba5aa00d20",
+      "name": "LeiCraft_Steve",
+      "skin_url": "https://textures.minecraft.net/texture/4566e69fc90748ee8d71d7ba5aa00d20",
+      "skin_model": "slim",
+      "uses_client": true,
+      "linked_at": null
+    },
+    "user": null
+  }
+}

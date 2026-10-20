@@ -1,9 +1,13 @@
 package de.leicraftmc.leicraftclient.client
 
+import de.leicraftmc.leicraftclient.client.auth.ClientAuth
+import de.leicraftmc.leicraftclient.client.command.LeiCraftCommands
 import de.leicraftmc.leicraftclient.client.config.ClientConfig
 import de.leicraftmc.leicraftclient.client.cosmetics.CosmeticsRenderLayer
+import de.leicraftmc.leicraftclient.client.gui.Notices
 import de.leicraftmc.leicraftclient.client.gui.PauseMenuEntry
 import net.fabricmc.api.ClientModInitializer
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityRenderLayerRegistrationCallback
 import net.minecraft.client.model.player.PlayerModel
 import net.minecraft.client.renderer.entity.RenderLayerParent
@@ -14,6 +18,8 @@ class MainClient : ClientModInitializer {
     override fun onInitializeClient() {
         ClientConfig.load()
         PauseMenuEntry.register()
+        Notices.register()
+        LeiCraftCommands.register()
 
         LivingEntityRenderLayerRegistrationCallback.EVENT.register { _, renderer, helper, _ ->
             // Fires for every living entity renderer; only the player one carries
@@ -24,6 +30,10 @@ class MainClient : ClientModInitializer {
             helper.register(CosmeticsRenderLayer(parent))
         }
 
-        LeiCraftClient.LOGGER.info("LeiCraftClient ready, backend {}", ClientConfig.apiBaseUrl)
+        // The Mojang handshake needs the game's services and user, which exist
+        // once the client has started; it runs in the background from there.
+        ClientLifecycleEvents.CLIENT_STARTED.register { _ -> ClientAuth.start() }
+
+        LeiCraftClient.LOGGER.info("LeiCraftClient ready, API {}", ClientConfig.apiBaseUrl)
     }
 }

@@ -1,21 +1,22 @@
 package de.leicraftmc.leicraftclient.client
 
-import de.leicraftmc.leicraftclient.client.cape.CapeManager
+import de.leicraftmc.leicraftclient.client.profiles.PlayerProfiles
+import java.util.UUID
 
 /**
- * Whether a player is known to the LeiCraft backend.
+ * Whether a player uses the LeiCraft Client -- the tab-list badge.
  *
- * This answers "has a LeiCraft profile", which is **not** the same as "is
- * running this mod". A client cannot see what another player has installed:
- * the client brand is sent to the server and never relayed on, and custom
- * payloads need a server-side plugin to forward them. Until the V2 backend
- * ships that handshake, having a cape or a cosmetic is the closest signal that
- * can be read client-side.
+ * Answered by the API's `uses_client` flag: true when the account signed in
+ * with the mod (the session handshake) or made client-session requests within
+ * the last 30 days. It does not depend on whether the player has a cape or any
+ * cosmetics, nor on whether capes are switched on in the options.
  *
- * The lookup is a cache read that starts a background fetch on a miss, so it is
- * cheap enough to call while drawing the tab list.
+ * The lookup is a cache read that queues a batched profile fetch on a miss
+ * (see [PlayerProfiles]), so it is cheap enough to call while drawing the tab
+ * list. [name] is only used for offline-mode UUIDs.
  */
 object LeiCraftUsers {
 
-    fun isKnown(username: String): Boolean = CapeManager.capeFor(username) != null
+    @JvmOverloads
+    fun isKnown(uuid: UUID, name: String? = null): Boolean = PlayerProfiles.usesClient(uuid, name)
 }

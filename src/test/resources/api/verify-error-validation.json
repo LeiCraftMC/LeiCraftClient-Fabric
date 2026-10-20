@@ -1,0 +1,29 @@
+{
+  "data": {
+    "challenge_id": "",
+    "username": "x"
+  },
+  "error": [
+    {
+      "origin": "string",
+      "code": "too_small",
+      "minimum": 1,
+      "inclusive": true,
+      "path": [
+        "challenge_id"
+      ],
+      "message": "Too small: expected string to have >=1 characters"
+    },
+    {
+      "origin": "string",
+      "code": "invalid_format",
+      "format": "regex",
+      "pattern": "/^\\w{3,16}$/",
+      "path": [
+        "username"
+      ],
+      "message": "Must be a valid Minecraft username"
+    }
+  ],
+  "success": false
+}

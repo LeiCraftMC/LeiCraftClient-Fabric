@@ -31,9 +31,12 @@ loom {
 
     runs {
         named("client") {
-            // Cosmetics are looked up by player name, so testing against a real
-            // profile needs the dev client to use that name:
+            // The dev client runs an offline account (name-based UUID), whose
+            // profile is looked up by name. To see a real player's capes and
+            // cosmetics on yourself, run the dev client under that name:
             //   ./gradlew runClient -PdevUsername=SomeName
+            // Offline accounts cannot sign in, so linking and the wardrobe
+            // need a real Microsoft account.
 
             val customName = System.getenv("DEV_MC_USERNAME")
                 ?: (project.findProperty("devUsername") as String?)

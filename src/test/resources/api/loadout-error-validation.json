@@ -1,0 +1,53 @@
+{
+  "data": {
+    "cape_product_id": null,
+    "cosmetics": [
+      {
+        "product_id": 2
+      },
+      {
+        "product_id": 2
+      },
+      {
+        "product_id": 2
+      },
+      {
+        "product_id": 2
+      },
+      {
+        "product_id": 2
+      },
+      {
+        "product_id": 2
+      },
+      {
+        "product_id": 2
+      },
+      {
+        "product_id": 2
+      },
+      {
+        "product_id": 2
+      },
+      {
+        "product_id": 2
+      },
+      {
+        "product_id": 2
+      }
+    ]
+  },
+  "error": [
+    {
+      "origin": "array",
+      "code": "too_big",
+      "maximum": 10,
+      "inclusive": true,
+      "path": [
+        "cosmetics"
+      ],
+      "message": "Too big: expected array to have <=10 items"
+    }
+  ],
+  "success": false
+}

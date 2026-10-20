@@ -1,0 +1,10 @@
+{
+  "success": true,
+  "code": 200,
+  "message": "Link status retrieved successfully",
+  "data": {
+    "linked": false,
+    "user": null,
+    "pending_code_expires_at": 1792490791663
+  }
+}

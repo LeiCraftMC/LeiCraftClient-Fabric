@@ -1,0 +1,2 @@
+# Stored API assets are verified by their SHA-256 in tests; never rewrite their line endings.
+src/test/resources/assets/** -text

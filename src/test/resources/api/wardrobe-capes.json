@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "code": 200,
+  "message": "Wardrobe retrieved successfully",
+  "data": [
+    {
+      "product": {
+        "id": 1,
+        "page_id": 1,
+        "collection_id": null,
+        "type": "cape",
+        "name": "Founder Cape",
+        "description": "",
+        "availability": "free",
+        "listed": true,
+        "texture": {
+          "id": "92a16c6a82846eda32b8084d6a0759d9b5ea59ae08f43269deccb5e4f3febf56",
+          "url": "http://localhost:12551/assets/92a16c6a82846eda32b8084d6a0759d9b5ea59ae08f43269deccb5e4f3febf56.png"
+        },
+        "preview": null,
+        "variants": [],
+        "sort_order": 0,
+        "published_at": 1792490190473,
+        "created_at": 1792490190000
+      },
+      "page": {
+        "id": 1,
+        "category": "official",
+        "slug": "leicraft-client",
+        "name": "LeiCraft Client"
+      },
+      "owned": false
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "data": {
+    "uuids": [
+      "not-a-uuid"
+    ]
+  },
+  "error": [
+    {
+      "origin": "string",
+      "code": "invalid_format",
+      "format": "regex",
+      "pattern": "/^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$/",
+      "path": [
+        "uuids",
+        0
+      ],
+      "message": "Must be a Minecraft UUID"
+    }
+  ],
+  "success": false
+}
