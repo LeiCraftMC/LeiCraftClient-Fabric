@@ -6,9 +6,9 @@
   "leicraftclient.options.reload": "Reload capes & cosmetics",
   "leicraftclient.options.website": "Open website",
   "leicraftclient.options.account_services": "Account",
-  "leicraftclient.options.account_services.tooltip": "Sign in to LeiCraft with your Minecraft session (needed for linking and the wardrobe). When off, the mod only shows other players' capes and cosmetics.",
+  "leicraftclient.options.account_services.tooltip": "Sign in to LeiCraft Client with your Minecraft session (needed for linking and the wardrobe). When off, the mod only shows other players' capes and cosmetics.",
 
-  "leicraftclient.account.header": "LeiCraft account",
+  "leicraftclient.account.header": "LeiCraft Client account",
   "leicraftclient.account.disabled": "Account services are off",
   "leicraftclient.account.offline": "Offline account — linking unavailable",
   "leicraftclient.account.connecting": "Connecting…",
@@ -21,22 +21,22 @@
   "leicraftclient.account.unlink": "Unlink",
   "leicraftclient.account.retry": "Retry",
   "leicraftclient.account.wardrobe": "Wardrobe",
-  "leicraftclient.account.wardrobe.needs_link": "Link your LeiCraft account first",
+  "leicraftclient.account.wardrobe.needs_link": "Link your LeiCraft Client account first",
 
-  "leicraftclient.link.chat": "Open this link to link your LeiCraft account (valid 10 minutes): %s",
+  "leicraftclient.link.chat": "Open this link to link your LeiCraft Client account (valid 10 minutes): %s",
   "leicraftclient.link.hover": "Click to open in your browser",
   "leicraftclient.link.already": "This Minecraft account is already linked.",
   "leicraftclient.link.failed": "Could not create a link: %s",
   "leicraftclient.link.expired": "The link expired. Use \"Link account\" again to get a new one.",
   "leicraftclient.link.done.title": "Account linked",
   "leicraftclient.link.done": "Linked to %s",
-  "leicraftclient.unlink.confirm.title": "Unlink your LeiCraft account?",
+  "leicraftclient.unlink.confirm.title": "Unlink your LeiCraft Client account?",
   "leicraftclient.unlink.confirm.message": "This Minecraft account will no longer be linked to %s, and its equipped cape and cosmetics are cleared.",
   "leicraftclient.unlink.done": "Account unlinked",
   "leicraftclient.unlink.failed": "Could not unlink",
 
   "leicraftclient.error.rate_limited": "Too many requests — try again in %s s",
-  "leicraftclient.error.network": "Can't reach the LeiCraft API: %s",
+  "leicraftclient.error.network": "Can't reach the LeiCraft Client API: %s",
 
   "leicraftclient.wardrobe.title": "Wardrobe",
   "leicraftclient.wardrobe.tab.capes": "Capes",
@@ -58,9 +58,9 @@
   "leicraftclient.wardrobe.limit": "You can equip at most %s cosmetics",
   "leicraftclient.wardrobe.count": "Cosmetics equipped: %s / %s",
 
-  "leicraftclient.command.status": "LeiCraft account: %s",
+  "leicraftclient.command.status": "LeiCraft Client account: %s",
   "leicraftclient.command.status.account": "Minecraft account: %s (%s)",
   "leicraftclient.command.disabled": "Account services are off (LeiCraftClient options)",
   "leicraftclient.command.link.creating": "Creating a link…",
-  "leicraftclient.command.wardrobe.needs_link": "Link your LeiCraft account first: /leicraftclient link"
+  "leicraftclient.command.wardrobe.needs_link": "Link your LeiCraft Client account first: /leicraftclient link"
 }
