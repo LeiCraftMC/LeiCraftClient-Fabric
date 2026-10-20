@@ -246,6 +246,24 @@ object ApiModels {
             }
         }
     }
+
+    /**
+     * A published release of the mod. Comes from the GitLab project that hosts
+     * the jars rather than from the LeiCraft API, so it is read from GitLab's
+     * release JSON, which has no envelope. [version] is the tag without its
+     * leading `v`; [url] is the release page.
+     */
+    data class Release(val version: String, val url: String) {
+        companion object {
+            /** Null for an upcoming release (`released_at` still in the future). */
+            fun read(o: JsonObject): Release? {
+                if (o.present("upcoming_release")?.asBoolean == true) return null
+                return Release(o.str("tag_name").removePrefix("v"), o.obj("_links").str("self"))
+            }
+
+            fun readList(data: JsonElement?): List<Release> = data.array().items(::read).filterNotNull()
+        }
+    }
 }
 
 // -- tree reading ---------------------------------------------------------

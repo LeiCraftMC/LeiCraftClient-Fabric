@@ -5,6 +5,9 @@
   "leicraftclient.options.cosmetics": "Custom cosmetics",
   "leicraftclient.options.reload": "Reload capes & cosmetics",
   "leicraftclient.options.website": "Open website",
+  "leicraftclient.options.version": "Version %s",
+  "leicraftclient.options.update": "Update available: %s",
+  "leicraftclient.options.update.tooltip": "Opens the release page, where the new version can be downloaded.",
   "leicraftclient.options.account_services": "Account",
   "leicraftclient.options.account_services.tooltip": "Sign in to LeiCraft Client with your Minecraft session (needed for linking and the wardrobe). When off, the mod only shows other players' capes and cosmetics.",
 

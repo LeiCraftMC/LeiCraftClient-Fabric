@@ -1,0 +1,162 @@
+[
+  {
+    "name": "Pre Release v2.0.0-pre.2",
+    "tag_name": "v2.0.0-pre.2",
+    "description": "",
+    "created_at": "2026-10-17T00:52:55.165Z",
+    "released_at": "2026-10-17T00:52:55.165Z",
+    "upcoming_release": false,
+    "author": {
+      "id": 3,
+      "username": "LeiCraft",
+      "public_email": "leicraft@leicraftmc.de",
+      "name": "Linus Fischer",
+      "state": "active",
+      "locked": false,
+      "avatar_url": "https://secure.gravatar.com/avatar/2441d22cc385239cde58700586dacea9e40626fd7ed3ade1c5900f293104ef1c?s=80&d=identicon",
+      "web_url": "https://git.leicraftmc.de/LeiCraft"
+    },
+    "commit": {
+      "id": "813a00c702024e6f604c3b6c5680dd3f5c0aab9d",
+      "short_id": "813a00c7",
+      "created_at": "2026-10-17T02:51:17.000+02:00",
+      "parent_ids": [
+        "d47ebf9591f1d37f8d2b9d15d5cee7aadc838eca"
+      ],
+      "title": "chore: update mod_version to 2.0.0-pre.2",
+      "message": "chore: update mod_version to 2.0.0-pre.2\n",
+      "author_name": "Linus Fischer",
+      "author_email": "leicraft@leicraftmc.de",
+      "authored_date": "2026-10-17T02:51:17.000+02:00",
+      "committer_name": "Linus Fischer",
+      "committer_email": "leicraft@leicraftmc.de",
+      "committed_date": "2026-10-17T02:51:17.000+02:00",
+      "trailers": {},
+      "extended_trailers": {},
+      "web_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/commit/813a00c702024e6f604c3b6c5680dd3f5c0aab9d"
+    },
+    "commit_path": "/LeiCraftMC/LeiCraftClient/Fabric/-/commit/813a00c702024e6f604c3b6c5680dd3f5c0aab9d",
+    "tag_path": "/LeiCraftMC/LeiCraftClient/Fabric/-/tags/v2.0.0-pre.2",
+    "assets": {
+      "count": 5,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/archive/v2.0.0-pre.2/Fabric-v2.0.0-pre.2.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/archive/v2.0.0-pre.2/Fabric-v2.0.0-pre.2.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/archive/v2.0.0-pre.2/Fabric-v2.0.0-pre.2.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/archive/v2.0.0-pre.2/Fabric-v2.0.0-pre.2.tar"
+        }
+      ],
+      "links": [
+        {
+          "id": 1,
+          "name": "leicraftclient-2.0.0-pre.2.jar",
+          "url": "https://git.leicraftmc.de/api/v4/projects/79/packages/generic/leicraftclient/2.0.0-pre.2/leicraftclient-2.0.0-pre.2.jar",
+          "direct_asset_url": "https://git.leicraftmc.de/api/v4/projects/79/packages/generic/leicraftclient/2.0.0-pre.2/leicraftclient-2.0.0-pre.2.jar",
+          "link_type": "package"
+        }
+      ]
+    },
+    "evidences": [
+      {
+        "sha": "9db03c330dc3dd540efd495964ac2556ee9111fa306d",
+        "filepath": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/releases/v2.0.0-pre.2/evidences/3.json",
+        "collected_at": "2026-10-17T00:52:55.251Z"
+      }
+    ],
+    "_links": {
+      "closed_issues_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/issues?release_tag=v2.0.0-pre.2&scope=all&state=closed",
+      "closed_merge_requests_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/merge_requests?release_tag=v2.0.0-pre.2&scope=all&state=closed",
+      "merged_merge_requests_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/merge_requests?release_tag=v2.0.0-pre.2&scope=all&state=merged",
+      "opened_issues_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/issues?release_tag=v2.0.0-pre.2&scope=all&state=opened",
+      "opened_merge_requests_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/merge_requests?release_tag=v2.0.0-pre.2&scope=all&state=opened",
+      "self": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/releases/v2.0.0-pre.2"
+    }
+  },
+  {
+    "name": "v2.0.0-pre.1",
+    "tag_name": "v2.0.0-pre.1",
+    "description": "",
+    "created_at": "2026-10-16T18:25:22.003Z",
+    "released_at": "2026-10-16T18:25:22.003Z",
+    "upcoming_release": false,
+    "author": {
+      "id": 3,
+      "username": "LeiCraft",
+      "public_email": "leicraft@leicraftmc.de",
+      "name": "Linus Fischer",
+      "state": "active",
+      "locked": false,
+      "avatar_url": "https://secure.gravatar.com/avatar/2441d22cc385239cde58700586dacea9e40626fd7ed3ade1c5900f293104ef1c?s=80&d=identicon",
+      "web_url": "https://git.leicraftmc.de/LeiCraft"
+    },
+    "commit": {
+      "id": "bad96d7deb59433ea1786898fcf4540018ca8217",
+      "short_id": "bad96d7d",
+      "created_at": "2026-10-16T20:20:33.000+02:00",
+      "parent_ids": [
+        "73988be2d7ff2c164df47f545e7dff2e120deb04"
+      ],
+      "title": "fix(ci): cache key may list at most two files",
+      "message": "fix(ci): cache key may list at most two files\n\nGitLab rejects more than two entries under cache:key:files, so the whole\nconfiguration was invalid and pipeline #1 failed at creation with no jobs and\nno stages:\n\n  default:cache:key:files config has too many items (maximum is 2)\n\nKey on build.gradle.kts and gradle.properties, the two files that decide what\nGradle resolves. Dropping gradle-wrapper.properties only means a Gradle\nversion bump reuses the key and adds the new distribution to the cached\nwrapper dir.\n\nAlso mark gradlew executable: it was committed 100644 from Windows, so a Linux\ncheckout got a non-executable wrapper. CI chmods it in before_script, but the\nbit belongs in the tree for anyone cloning on Linux.\n",
+      "author_name": "Linus Fischer",
+      "author_email": "leicraft@leicraftmc.de",
+      "authored_date": "2026-10-16T20:17:25.000+02:00",
+      "committer_name": "Linus Fischer",
+      "committer_email": "leicraft@leicraftmc.de",
+      "committed_date": "2026-10-16T20:20:33.000+02:00",
+      "trailers": {},
+      "extended_trailers": {},
+      "web_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/commit/bad96d7deb59433ea1786898fcf4540018ca8217"
+    },
+    "commit_path": "/LeiCraftMC/LeiCraftClient/Fabric/-/commit/bad96d7deb59433ea1786898fcf4540018ca8217",
+    "tag_path": "/LeiCraftMC/LeiCraftClient/Fabric/-/tags/v2.0.0-pre.1",
+    "assets": {
+      "count": 4,
+      "sources": [
+        {
+          "format": "zip",
+          "url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/archive/v2.0.0-pre.1/Fabric-v2.0.0-pre.1.zip"
+        },
+        {
+          "format": "tar.gz",
+          "url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/archive/v2.0.0-pre.1/Fabric-v2.0.0-pre.1.tar.gz"
+        },
+        {
+          "format": "tar.bz2",
+          "url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/archive/v2.0.0-pre.1/Fabric-v2.0.0-pre.1.tar.bz2"
+        },
+        {
+          "format": "tar",
+          "url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/archive/v2.0.0-pre.1/Fabric-v2.0.0-pre.1.tar"
+        }
+      ],
+      "links": []
+    },
+    "evidences": [
+      {
+        "sha": "88e10e3411012bb726c80e5dc506ffd33106d6abfaed",
+        "filepath": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/releases/v2.0.0-pre.1/evidences/1.json",
+        "collected_at": "2026-10-16T18:25:22.139Z"
+      }
+    ],
+    "_links": {
+      "closed_issues_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/issues?release_tag=v2.0.0-pre.1&scope=all&state=closed",
+      "closed_merge_requests_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/merge_requests?release_tag=v2.0.0-pre.1&scope=all&state=closed",
+      "merged_merge_requests_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/merge_requests?release_tag=v2.0.0-pre.1&scope=all&state=merged",
+      "opened_issues_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/issues?release_tag=v2.0.0-pre.1&scope=all&state=opened",
+      "opened_merge_requests_url": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/merge_requests?release_tag=v2.0.0-pre.1&scope=all&state=opened",
+      "self": "https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/releases/v2.0.0-pre.1"
+    }
+  }
+]

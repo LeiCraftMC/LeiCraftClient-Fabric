@@ -3,6 +3,7 @@ package de.leicraftmc.leicraftclient.client.api
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import de.leicraftmc.leicraftclient.client.LeiCraftClient
 import de.leicraftmc.leicraftclient.client.auth.ClientAuth
 import de.leicraftmc.leicraftclient.client.config.ClientConfig
@@ -89,6 +90,21 @@ object LeiCraftApi {
         }
     }
 
+    /**
+     * The mod's releases, newest first, from the public GitLab project the
+     * jars are published to. The LeiCraft API has no version endpoint; this
+     * is the same list the release pipeline writes to.
+     */
+    suspend fun releases(): ApiResult<List<ApiModels.Release>> =
+        when (val result = download(RELEASES_URL, MAX_RELEASES_BYTES)) {
+            is ApiResult.Error -> result
+            is ApiResult.Ok -> try {
+                ApiResult.Ok(ApiModels.Release.readList(JsonParser.parseString(String(result.data, StandardCharsets.UTF_8))), "")
+            } catch (e: Exception) {
+                ApiResult.Error(200, "Malformed release list: ${e.message ?: e.javaClass.simpleName}")
+            }
+        }
+
     // -- handshake (no session yet) -------------------------------------------
 
     suspend fun challenge(): ApiResult<ApiModels.Challenge> =
@@ -152,6 +168,12 @@ object LeiCraftApi {
     // -- plumbing -------------------------------------------------------------
 
     private const val LOOKUP_PATH = "/v1/players/lookup"
+
+    private const val RELEASES_URL =
+        "https://git.leicraftmc.de/api/v4/projects/LeiCraftMC%2FLeiCraftClient%2FFabric/releases?per_page=20"
+
+    /** A page of 20 releases is a few dozen KB, most of it author and commit details. */
+    private const val MAX_RELEASES_BYTES = 1024 * 1024
 
     /** The API caps wardrobe searches at 64 characters. */
     const val MAX_SEARCH_LENGTH = 64

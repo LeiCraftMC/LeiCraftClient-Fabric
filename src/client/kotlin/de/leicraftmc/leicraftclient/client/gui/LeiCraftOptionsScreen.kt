@@ -1,11 +1,13 @@
 package de.leicraftmc.leicraftclient.client.gui
 
 import de.leicraftmc.leicraftclient.client.LeiCraftClient
+import de.leicraftmc.leicraftclient.client.api.ApiModels
 import de.leicraftmc.leicraftclient.client.assets.AssetCache
 import de.leicraftmc.leicraftclient.client.auth.AccountLinking
 import de.leicraftmc.leicraftclient.client.auth.ClientAuth
 import de.leicraftmc.leicraftclient.client.config.ClientConfig
 import de.leicraftmc.leicraftclient.client.profiles.PlayerProfiles
+import de.leicraftmc.leicraftclient.client.update.UpdateCheck
 import net.minecraft.ChatFormatting
 import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.components.StringWidget
@@ -28,20 +30,43 @@ import java.net.URI
  *
  * The "LeiCraft account" section mirrors [ClientAuth.state] and
  * [AccountLinking.waitingUntil]; the widgets are rebuilt whenever either
- * changes, so the buttons always match what can be done right now.
+ * changes, so the buttons always match what can be done right now. The same
+ * goes for [UpdateCheck.available], which adds an update button under the
+ * version line once a newer release is known.
  */
 class LeiCraftOptionsScreen(private val parent: Screen?) : Screen(TITLE) {
 
-    private var shownState: Pair<ClientAuth.State, Long?>? = null
+    /** What the widgets were built for; any change rebuilds them. */
+    private data class Shown(val auth: ClientAuth.State, val waitingUntil: Long?, val update: ApiModels.Release?)
+
+    private var shown: Shown? = null
+
+    private fun current() = Shown(ClientAuth.state.value, AccountLinking.waitingUntil.value, UpdateCheck.available.value)
 
     override fun init() {
-        shownState = ClientAuth.state.value to AccountLinking.waitingUntil.value
+        shown = current()
 
         val grid = GridLayout()
         grid.defaultCellSetting().padding(BUTTON_PADDING)
         val rows = grid.createRowHelper(COLUMNS)
 
         rows.addChild(StringWidget(BUTTON_WIDTH_FULL, 9, title, font), COLUMNS)
+        rows.addChild(
+            StringWidget(BUTTON_WIDTH_FULL, 9, Component.translatable("leicraftclient.options.version", LeiCraftClient.version).withStyle(ChatFormatting.GRAY), font),
+            COLUMNS,
+        )
+        shown?.update?.let { release ->
+            rows.addChild(
+                Button.builder(Component.translatable("leicraftclient.options.update", release.version).withStyle(ChatFormatting.GREEN)) { _ ->
+                    runCatching { URI.create(release.url) }.getOrNull()
+                        ?.let { ConfirmLinkScreen.confirmLinkNow(this, it, true) }
+                }
+                    .width(BUTTON_WIDTH_FULL)
+                    .tooltip(Tooltip.create(UPDATE_TOOLTIP))
+                    .build(),
+                COLUMNS,
+            )
+        }
 
         rows.addChild(toggle(CAPES, ClientConfig.capesEnabled) {
             ClientConfig.capesEnabled = !ClientConfig.capesEnabled
@@ -134,8 +159,7 @@ class LeiCraftOptionsScreen(private val parent: Screen?) : Screen(TITLE) {
 
     override fun tick() {
         super.tick()
-        val now = ClientAuth.state.value to AccountLinking.waitingUntil.value
-        if (now != shownState) rebuildWidgets()
+        if (current() != shown) rebuildWidgets()
     }
 
     private fun confirmUnlink() {
@@ -183,6 +207,7 @@ class LeiCraftOptionsScreen(private val parent: Screen?) : Screen(TITLE) {
         val COSMETICS: Component = Component.translatable("leicraftclient.options.cosmetics")
         val RELOAD: Component = Component.translatable("leicraftclient.options.reload")
         val WEBSITE: Component = Component.translatable("leicraftclient.options.website")
+        val UPDATE_TOOLTIP: Component = Component.translatable("leicraftclient.options.update.tooltip")
         val ACCOUNT_HEADER: Component = Component.translatable("leicraftclient.account.header")
         val ACCOUNT_SERVICES: Component = Component.translatable("leicraftclient.options.account_services")
         val ACCOUNT_SERVICES_TOOLTIP: Component = Component.translatable("leicraftclient.options.account_services.tooltip")

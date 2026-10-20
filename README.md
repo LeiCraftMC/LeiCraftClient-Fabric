@@ -22,6 +22,12 @@ API's OpenAPI document at `/docs/v1/openapi`. The OptiFine-style V1 routes
 - **Wardrobe** — once linked, pick a cape and up to ten cosmetics, with a live
   preview, and save them as the loadout (options screen or
   `/leicraftclient wardrobe`).
+- **Update notice** — once per game start the mod reads the
+  [releases](https://git.leicraftmc.de/LeiCraftMC/LeiCraftClient/Fabric/-/releases)
+  and, if there is a newer version, the options screen offers it with a button
+  to the release page. Stable versions are only offered stable releases;
+  pre-releases are offered anything newer. The version also shows in the
+  options screen and the window title (`LeiCraftClient 2.0.0 | Minecraft* 26.3`).
 
 The options screen is reached from the *LeiCraftClient* button on the title
 screen (below Realms, or below Mod Menu's *Mods*) and in the pause menu.
@@ -166,7 +172,8 @@ The guiding constraint was **minimum maintenance per Minecraft update**.
 - **Three small mixins.** `AbstractClientPlayer#getSkin` is patched to swap in
   the cape, so everything vanilla does with capes (the skin-customisation
   toggle, elytra swapping, chest-equipment offsets) keeps working untouched.
-  The other two only rename the window (`Minecraft#createTitle`) and add the
+  The other two only put the client and its version in the window title
+  (`Minecraft#createTitle`) and add the
   tab-list badge (`PlayerTabOverlay#getNameForDisplay`).
 - **Cosmetics need no mixin at all.** They register through Fabric's
   `LivingEntityRenderLayerRegistrationCallback`.
@@ -218,13 +225,18 @@ src/client/kotlin/.../client/
     Notices.kt               chat lines, toasts, next-tick screens
     MenuEntry.kt, MenuLayout.kt, TabListIcon.kt
   command/LeiCraftCommands.kt  /leicraftclient
+  update/
+    UpdateCheck.kt           one release check per start -> options screen
+    ReleaseSelector.kt       which release counts as an update (SemVer)
 src/client/java/.../mixin/client/
   AbstractClientPlayerMixin.java   cape swap (mixins must be Java)
   PlayerTabOverlayMixin.java       tab-list badge
-  MinecraftTitleMixin.java         window title
+  MinecraftTitleMixin.java         window title (client name + version)
 src/test/kotlin/...              CPM transform, API parsing, batching, variants,
-                                 asset hashing, config migration, wardrobe rules
+                                 asset hashing, config migration, wardrobe rules,
+                                 menu layout, update selection
 src/test/resources/api/          real API responses used as fixtures
+src/test/resources/gitlab/       the real GitLab release list
 ```
 
 ## The CPM coordinate transform
@@ -310,7 +322,7 @@ Microsoft account (a launcher-started instance). To use a local API, set
 `apiBaseUrl` to e.g. `http://localhost:12331`.
 
 The fixtures in `src/test/resources/api/` are real responses from the
-API-Server; `src/test/resources/assets/` holds two stored assets named by their
+API-Server, `src/test/resources/gitlab/releases.json` the real release list; `src/test/resources/assets/` holds two stored assets named by their
 SHA-256 (kept byte-exact by `.gitattributes`).
 
 ### Note on the toolchain

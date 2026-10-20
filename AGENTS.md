@@ -57,6 +57,7 @@ Under `src/client/kotlin/de/leicraftmc/leicraftclient/client/`:
 | `cosmetics` | `CpmParser`, `CpmModel`, `CosmeticsRenderLayer` |
 | `gui` | options screen, `WardrobeScreen`, `WardrobeSelection` (pure rules), `MenuEntry` (title-screen and pause-menu button) with `MenuLayout` (pure), tab icon, `Notices` |
 | `command` | `/leicraftclient` with `status`, `link`, `wardrobe` |
+| `update` | `UpdateCheck` (one GitLab release lookup per start, `available` flow for the options screen), `ReleaseSelector` (pure: SemVer via Fabric Loader, stable versions only get stable releases) |
 
 Rules of thumb:
 
@@ -66,7 +67,7 @@ Rules of thumb:
 - **Everything network goes through `LeiCraftApi`** and therefore through
   `BackendGate`. Client-session calls (`/v1/client/…`) get their token from
   `ClientAuth.token()` and re-run the handshake once on a `401`.
-  `/v1/players/lookup` and assets are public — never send the token there (an
+  `/v1/players/lookup`, assets and `releases()` (GitLab) are public — never send the token there (an
   invalid token on a public route answers `401`).
 - **Assets are content-addressed.** An id is the SHA-256 of the bytes and doubles
   as a file name, so `AssetIntegrity.isValidId` is checked before any disk access.
@@ -82,10 +83,12 @@ Rules of thumb:
 
 `src/test/kotlin/...` covers the CPM transform, envelope and model parsing,
 lookup batching, variant selection, asset hashing, config migration, the
-wardrobe's selection rules and the session file. API fixtures in
+wardrobe's selection rules, the menu layout, update selection and the session
+file. API fixtures in
 `src/test/resources/api/` are **real responses** captured from the API-Server
 (in-process, with its own test helpers); keep them real rather than hand-edited.
-`src/test/resources/assets/` holds stored assets named by their SHA-256 —
+`src/test/resources/gitlab/releases.json` is likewise the real answer of the
+GitLab Releases API. `src/test/resources/assets/` holds stored assets named by their SHA-256 —
 `.gitattributes` keeps them byte-exact, so do not reformat them.
 
 ## Before you change rendering

@@ -6,6 +6,7 @@ import de.leicraftmc.leicraftclient.client.config.ClientConfig
 import de.leicraftmc.leicraftclient.client.cosmetics.CosmeticsRenderLayer
 import de.leicraftmc.leicraftclient.client.gui.MenuEntry
 import de.leicraftmc.leicraftclient.client.gui.Notices
+import de.leicraftmc.leicraftclient.client.update.UpdateCheck
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityRenderLayerRegistrationCallback
@@ -31,8 +32,12 @@ class MainClient : ClientModInitializer {
         }
 
         // The Mojang handshake needs the game's services and user, which exist
-        // once the client has started; it runs in the background from there.
-        ClientLifecycleEvents.CLIENT_STARTED.register { _ -> ClientAuth.start() }
+        // once the client has started; it runs in the background from there,
+        // next to the one-off update check.
+        ClientLifecycleEvents.CLIENT_STARTED.register { _ ->
+            ClientAuth.start()
+            UpdateCheck.start()
+        }
 
         LeiCraftClient.LOGGER.info("LeiCraftClient ready, API {}", ClientConfig.apiBaseUrl)
     }
